@@ -1,14 +1,14 @@
 <template>
   <div>
-    <img src="./assets/logo.png">
-    <p>
-      If Element Plus is successfully added to this project, you'll see an
-      <code v-text="'<el-button>'"></code>
-      below
-    </p>
-    <el-button type="primary">el-button</el-button>
-    <el-input v-model="input" placeholder="请输入内容"></el-input>
-    <el-input-number v-model="numInput" @change="handleChange" :min="1" :max="10" label="描述文字"></el-input-number>
+    <el-tabs v-model="active" @tab-click="onClick">
+      <el-tab-pane label="获取股票快照" name="get-security-snapshot-demo">获取股票快照</el-tab-pane>
+      <el-tab-pane label="行情推送" name="quote-push-demo">行情推送</el-tab-pane>
+      <el-tab-pane label="下单" name="place-order-demo">下单</el-tab-pane>
+      <el-tab-pane label="MACD策略" name="macd-strategy">MACD策略</el-tab-pane>
+    </el-tabs>
+    <div id="main">
+      <router-view />
+    </div>
   </div>
 </template>
 
@@ -21,6 +21,11 @@ export default defineComponent ({
   components: {
     // HelloWorld
   },
+  data() {
+    return {
+      active: 'get-security-snapshot-demo'
+    };
+  },
   setup() {
     const numInput = ref(1);
     const handleChange = (value) => {
@@ -32,18 +37,29 @@ export default defineComponent ({
       numInput,
       handleChange,
     }
+  },
+  methods: {
+    onClick(tab, event) {
+      console.log('the tab is:' + tab)
+      console.log('the event is:' + event)
+      this.$router.push({ path: "/" + this.active })
+      .catch(() => {});
+      console.log(this.active);
+    }
   }
 })
 
 </script>
 
-<style>
+<style rel="stylesheet/scss" lang="scss" scoped>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#main {
+  padding-top: 10px;
+  font-family: "Microsoft Yahei";
+  font-size: 16px;
 }
 </style>
