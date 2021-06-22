@@ -1,4 +1,14 @@
-import { ElButton, ElInput, ElInputNumber, ElTabPane, ElTabs, ElOption, ElSelect, ElTag } from 'element-plus'
+import { 
+  ElButton, 
+  ElInput, 
+  ElInputNumber, 
+  ElTabPane, 
+  ElTabs, 
+  ElOption, 
+  ElSelect, 
+  ElTag,
+  ElDatePicker
+} from 'element-plus'
 
 export default (app) => {
   app.use(ElButton)
@@ -9,4 +19,5 @@ export default (app) => {
   app.use(ElSelect)
   app.use(ElOption)
   app.use(ElTag)
+  app.use(ElDatePicker)
 }

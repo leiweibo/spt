@@ -2,7 +2,7 @@
   <div>
     <el-tabs v-model="active" @tab-click="onClick">
       <el-tab-pane label="获取股票快照" name="get-security-snapshot-demo">获取股票快照</el-tab-pane>
-      <el-tab-pane label="行情推送" name="quote-push-demo">行情推送</el-tab-pane>
+      <el-tab-pane label="所属板块" name="get-security-plate">获取所属板块</el-tab-pane>
       <el-tab-pane label="下单" name="place-order-demo">下单</el-tab-pane>
       <el-tab-pane label="MACD策略" name="macd-strategy">MACD策略</el-tab-pane>
     </el-tabs>
@@ -46,6 +46,11 @@ export default defineComponent ({
       .catch(() => {});
       console.log(this.active);
     }
+  },
+  mounted() {
+    this.$nextTick(()=> {
+      this.onClick('get-security-snapshot-demo', null)
+    })
   }
 })
 
