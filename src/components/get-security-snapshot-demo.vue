@@ -14,7 +14,8 @@
       </div>
       <el-input id="code" v-model="code" placeholder="股票代码"></el-input>
     </div>
-    <el-button type="primary" v-on:click="onClick()">获取股票快照</el-button>
+    <el-button type="primary" v-on:click="getSnapshot()">获取股票快照</el-button>
+    <el-button type="primary" v-on:click="getStockPlate()">获取股票所属板块</el-button>
     <span id="err">{{ errMsg }}</span>
     <div id="output">
       <el-tag effect="dark">快照数据</el-tag>
@@ -27,9 +28,9 @@
 
 <script>
 import "../../public/prism.css";
-import ftWebsocket from "futu-api";
 import beautify from "js-beautify";
 import prism from "prismjs";
+import { dorequest } from '../utils/ftservice';
 
 export default {
   name: "getSecuritySnapshotDemo",
@@ -63,60 +64,80 @@ export default {
   created() {},
   unmounted() {},
   methods: {
-    onClick() {
+    getSnapshot() {
       this.errMsg = "";
-      let websocket = new ftWebsocket();
-      //参数1指定监听地址
-      //参数2指定Websocket服务端口
-      //参数3指定是否启用SSL，如果需要启用则需要在FutuOpenD配置相关选项
-      //参数4指定连接的密钥，否则会连接超时，密钥在在FutuOpenD可配置，UI版本在不指定的情况下会随机指定
-      websocket.start(
-        this.$store.state.addr,
-        this.$store.state.port,
-        this.$store.state.enable_ssl,
-        this.$store.state.key
-      );
-
-      websocket.onlogin = (ret, msg) => {
-        if (ret) {
-          const req = {
-            c2s: {
-              securityList: [
-                {
-                  market: this.market,
-                  code: this.code,
-                },
-              ],
-            },
-          };
-          websocket
-            .GetSecuritySnapshot(req)
-            .then((res) => {
-              let code = beautify(JSON.stringify(res), {
-                indent_size: 2,
-                space_in_empty_paren: true,
-              });
-              this.get_message = prism.highlight(
-                code,
-                prism.languages.javascript,
-                "javascript"
-              );
-            })
-            .catch((error) => {
-              this.errMsg = "error: " + msg;
-              console.log("error:", error);
+      this.websocket = dorequest(this.$store, (msg) => {
+        const req = {
+          c2s: {
+            rehabType: 1,
+            klType: 2,
+            security:{ code:'BK0047', market: 21 },
+            beginTime: "2021-06-01",
+            endTime: "2021-06-10",
+          },
+        };
+        this.websocket
+          .RequestHistoryKL(req)
+          .then((res) => {
+            let code = beautify(JSON.stringify(res), {
+              indent_size: 2,
+              space_in_empty_paren: true,
             });
+            this.get_message = prism.highlight(
+              code,
+              prism.languages.javascript,
+              "javascript"
+            );
+          })
+          .catch((error) => {
+            this.errMsg = "error: " + msg;
+            console.log("error:", error);
+          });
 
-          //关闭行情连接，连接不再使用之后，要关闭，否则占用不必要资源
-          //同时OpenD也限制了最多128条连接
-          //也可以一个页面或者一个项目维护一条连接，这里范例请求一次创建一条连接
-          websocket.stop();
-        } else {
-          this.errMsg = "error: 请检查是否有设置store.js中key字段";
-          console.log("error:", msg);
-        }
-      };
+        //关闭行情连接，连接不再使用之后，要关闭，否则占用不必要资源
+        //同时OpenD也限制了最多128条连接
+        //也可以一个页面或者一个项目维护一条连接，这里范例请求一次创建一条连接
+        this.websocket.stop();
+      }, 
+      (msg) => {
+        this.errMsg = msg
+      });
     },
+    getStockPlate() {
+      this.errMsg = "";
+      this.websocket = dorequest(this.$store, (msg) => {
+        const req = {
+          c2s: {
+            securityList: [
+              {
+                market: this.market,
+                code: this.code,
+              },
+            ],
+          },
+        };
+        this.websocket
+          .GetOwnerPlate(req)
+          .then((res) => {
+            let code = beautify(JSON.stringify(res), {
+              indent_size: 2,
+              space_in_empty_paren: true,
+            });
+            this.get_message = prism.highlight(
+              code,
+              prism.languages.javascript,
+              "javascript"
+            );
+          })
+          .catch((error) => {
+            this.errorMsg = "error:" + msg;
+            console.log("error:", error)
+          })
+      }, 
+      (msg) => {
+        this.errMsg = msg
+      });
+    }
   },
 };
 </script>
