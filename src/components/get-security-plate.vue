@@ -22,39 +22,42 @@
         style="margin-left: 30px;">
       </el-date-picker>
     </div>
-    <el-button type="primary" v-on:click="onClick()">获取股票快照</el-button>
+    <el-button type="primary" v-on:click="getStockPlate()">获取股票所属板块</el-button>
     <div id="err">{{ errMsg }}</div>
     <div id="output">
-      <el-tag effect="dark">快照数据</el-tag>
-      <div id="content">
-        <pre><code class="language-js" v-html="get_message"></code></pre>
+      <el-tag effect="dark">K线图</el-tag>
+      <div id="content" wrap>
+        <el-space wrap>
+          <Layout :title='chartTitlePlate'>
+            <div id="chart-type-plate-k-line" class="k-line-chart"/>
+          </Layout>
+
+          <Layout :title='chartTitleStock'>
+            <div id="chart-type-stock-k-line" class="k-line-chart"/>
+          </Layout>
+        </el-space>
       </div>
 
 
     </div>
-    <Layout title="图表类型">
-      <div id="chart-type-k-line" class="k-line-chart"/>
-    </Layout>
   </div>
 </template>
 
 <script>
 import "../../public/prism.css";
-import ftWebsocket from "futu-api";
-import beautify from "js-beautify";
-import prism from "prismjs";
 import dayjs from "dayjs";
 import { init } from 'klinecharts'
-import generatedKLineDataList from './generatedKLineDataList'
 import Layout from "./Layout"
+import { dorequest } from '../utils/ftservice';
+import { dateFormat } from "../utils/format";
 
 export default {
   name: "getSecurityPlate",
   data() {
     return {
       errMsg: "",
-      market: 1,
-      code: "00700",
+      market: 21,
+      code: "601108",
       options: [
         {
           value: 1, //Qot_Common.QotMarket_HK_Security
@@ -79,73 +82,170 @@ export default {
         dayjs().subtract(200, "day").format("YYYY-MM-DD"),
         dayjs().format("YYYY-MM-DD"),
       ],
+      chartTitlePlate: '所属板块',
+      chartTitleStock: ''
     };
   },
   created() {},
   mounted: function () {
-    this.kLineChart = init('chart-type-k-line')
-    const data = generatedKLineDataList()
-    console.log(data)
-    this.kLineChart.applyNewData(data)
+    this.kLineChart = init('chart-type-plate-k-line')
+    this.stKLineChart = init('chart-type-stock-k-line')
   },
   unmounted() {},
   components: {Layout},
   methods: {
-    onClick() {
+    getStockPlate() {
       this.errMsg = "";
-      let websocket = new ftWebsocket();
-      console.log(`the start date: ${this.date[0]} and the end date: ${this.date[1]}`)
-      //参数1指定监听地址
-      //参数2指定Websocket服务端口
-      //参数3指定是否启用SSL，如果需要启用则需要在FutuOpenD配置相关选项
-      //参数4指定连接的密钥，否则会连接超时，密钥在在FutuOpenD可配置，UI版本在不指定的情况下会随机指定
-      websocket.start(
-        this.$store.state.addr,
-        this.$store.state.port,
-        this.$store.state.enable_ssl,
-        this.$store.state.key
-      );
+      this.websocket = dorequest(this.$store, async (msg) => {
+        console.log(`this.market: ${this.market}`)
+        console.log(`this.code: ${this.code}`)
+        const securityList = [{
+          market: this.market,
+          code: this.code,
+        }];
 
-      websocket.onlogin = (ret, msg) => {
-        if (ret) {
-          const req = {
-            c2s: {
-              securityList: [
-                {
-                  market: this.market,
-                  code: this.code,
-                },
-              ],
-            },
-          };
-          websocket
-            .GetSecuritySnapshot(req)
-            .then((res) => {
-              let code = beautify(JSON.stringify(res), {
-                indent_size: 2,
-                space_in_empty_paren: true,
-              });
-              this.get_message = prism.highlight(
-                code,
-                prism.languages.javascript,
-                "javascript"
-              );
-            })
-            .catch((error) => {
-              this.errMsg = "error: " + msg;
-              console.log("error:", error);
-            });
-
-          //关闭行情连接，连接不再使用之后，要关闭，否则占用不必要资源
-          //同时OpenD也限制了最多128条连接
-          //也可以一个页面或者一个项目维护一条连接，这里范例请求一次创建一条连接
-          websocket.stop();
-        } else {
-          this.errMsg = "error: 请检查是否有设置store.js中key字段";
-          console.log("error:", msg);
-        }
-      };
+        const plateInfo = await this.getSecurityPlate(securityList);
+        const plate = plateInfo.s2c.ownerPlateList[0].plateInfoList[0].plate
+        this.chartTitlePlate = `${plateInfo.s2c.ownerPlateList[0].plateInfoList[0].name}板块`;
+        this.chartTitleStock = `${this.code}`
+        console.log(plate)
+        console.log(`------${msg}`)
+        const plateLineRaw = await this.fetchHistoryKline(plate)
+        this.setupKline(plateLineRaw, this.kLineChart)
+        const securityLineRaw = await this.fetchHistoryKline({"code": this.code, "market": this.market})
+        this.setupKline(securityLineRaw, this.stKLineChart)
+      }, 
+      (msg) => {
+        this.errMsg = msg
+      });
     },
+    // 获取股票所属板块
+    getSecurityPlate(securityList) {
+      const response = this.websocket
+        .GetOwnerPlate({
+          c2s: {
+            securityList: securityList,
+          },
+        })
+      return response;
+    },
+    // 获取历史K线图
+    fetchHistoryKline(security) {
+      let beginTime = dateFormat(this.date[0]);
+      // if (security.code.startsWith("BK")) {
+      //   // 板块数据需要计算5日，或者15日涨跌幅，这里的数据多取一点。
+      //   beginTime = dateFormat(dayjs(this.date[0]).subtract(30, "day"))
+      // }
+      return this.websocket
+        .RequestHistoryKL({
+          c2s: {
+            rehabType: 1,
+            klType: 2,
+            security,
+            beginTime: dateFormat(beginTime),
+            endTime: dateFormat(this.date[1]),
+          },
+        })
+        .then((res) => {
+          return res.s2c.klList.map((item) => {
+            console.log(item)
+            return {
+              ...item,
+              volume: item.volume.low ? item.volume.low : item.volume,
+              changeRate: `${item.changeRate.toFixed(2)} %`,
+            };
+          });
+        })
+        .catch((err) => {
+          console.log("err:", err);
+        });
+    },
+    // 
+    setupKline(rawLine, kLineChart) {
+      const plateLine = rawLine.map((item) => {
+          return {
+            close: item.closePrice,
+            high: item.highPrice,
+            low: item.lowPrice,
+            open: item.openPrice,
+            timestamp: item.timestamp * 1000,
+            turnover: item.turnover,
+            volume: item.volume,
+            changeRate: item.changeRate
+          };
+        });
+        console.log(`the plateLine is: ${plateLine}`)
+        kLineChart.setStyleOptions({
+          candle: {
+            bar: {
+              upColor: '#EF5350',
+              downColor: '#26A69A',
+              noChangeColor: '#888888'
+            },
+            // 提示  
+            tooltip: {
+              // 'always' | 'follow_cross' | 'none'
+              showRule: 'follow_cross',
+              // 'standard' | 'rect'
+              showType: 'rect',
+              labels: ['时间', '开', '收', '高', '低', '成交量', '涨跌幅'],
+              // 可以是数组，也可以是方法，如果是方法则需要返回一个数组
+              // 数组和方法返回的数组格式为:
+              // [xxx, xxx, ......]或者[{ color: '#fff', value: xxx }, { color: '#000', value: xxx }, .......]
+              values: kLineData => {
+                return [
+                  {
+                    value: kLineData['timestamp']
+                  },
+                  {
+                    value: kLineData['open']
+                  },
+                  {
+                    value: kLineData['close']
+                  },
+                  {
+                    value: kLineData['high']
+                  },
+                  {
+                    value: kLineData['low']
+                  },
+                  {
+                    value: kLineData['volume']
+                  },
+                  {
+                    value: kLineData['changeRate']
+                  },
+                ]
+              },
+              defaultValue: 'n/a',
+              rect: {
+                paddingLeft: 0,
+                paddingRight: 0,
+                paddingTop: 0,
+                paddingBottom: 6,
+                offsetLeft: 8,
+                offsetTop: 8,
+                offsetRight: 8,
+                borderRadius: 4,
+                borderSize: 1,
+                borderColor: '#e9ebef',
+                fillColor: 'rgba(17, 17, 17, .3)'
+              },
+              text: {
+                size: 12,
+                family: 'Helvetica Neue',
+                weight: 'normal',
+                color: '#ffffff',
+                marginLeft: 8,
+                marginTop: 6,
+                marginRight: 8,
+                marginBottom: 0
+              }
+            }
+          }
+        })
+        kLineChart.applyNewData(plateLine)
+    }
   },
 };
 </script>
@@ -203,13 +303,13 @@ export default {
     height: 440px;
     padding: 16px 6px 16px 16px;
   }
-  .k-line-chart-title {
-    margin: 0;
-    color: #252525;
-    padding-bottom: 10px;
-  }
-  .k-line-chart {
-    display: flex;
-    flex: 1;
-  }
+.k-line-chart-title {
+  margin: 0;
+  color: #252525;
+  padding-bottom: 10px;
+}
+.k-line-chart {
+  display: flex;
+  flex: 1;
+}
 </style>

@@ -7,7 +7,8 @@ import {
   ElOption, 
   ElSelect, 
   ElTag,
-  ElDatePicker
+  ElDatePicker,
+  ElSpace
 } from 'element-plus'
 
 export default (app) => {
@@ -20,4 +21,5 @@ export default (app) => {
   app.use(ElOption)
   app.use(ElTag)
   app.use(ElDatePicker)
+  app.use(ElSpace)
 }
