@@ -23,7 +23,7 @@ export default defineComponent ({
   },
   data() {
     return {
-      active: 'get-security-snapshot-demo'
+      active: 'north-finance'
     };
   },
   setup() {
@@ -49,7 +49,7 @@ export default defineComponent ({
   },
   mounted() {
     this.$nextTick(()=> {
-      this.onClick('get-security-snapshot-demo', null)
+      this.onClick('north-finance', null)
     })
   }
 })

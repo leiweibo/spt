@@ -1,12 +1,188 @@
 <template>
-  <div id="chars-box" style="width: 100%; height: 400px;">
+  <div id="main">
+    <div id="input">
+      <div id="stock">
+        股票
+        <el-select id="market" v-model="market">
+          <el-option
+            v-for="item in options"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          ></el-option>
+        </el-select>
+      </div>
+      <el-input id="code" v-model="code" placeholder="股票代码"></el-input>
+      <el-date-picker
+        v-model="date"
+        type="daterange"
+        range-separator="至"
+        start-placeholder="开始日期"
+        end-placeholder="结束日期"
+        style="margin-left: 30px;">
+      </el-date-picker>
+    </div>
+    <el-button type="primary" v-on:click="getData()">股票北向资金持仓</el-button>
+    <div id="err">{{ errMsg }}</div>
+    <div id="chars-box" style="width: 100%; height: 400px;">
+    </div>
   </div>
 </template>
 <script>
+import "../../public/prism.css";
 import * as echarts from "echarts";
 import { onUnmounted, onMounted } from 'vue';
+import dayjs from "dayjs";
+import { aliyunGet } from "../service/http";
+import { dateFormat } from "../utils/format";
+import { dorequest } from '../utils/ftservice';
+
 export default {
   name: "northFinance",
+  data() {
+    return {
+      errMsg: "",
+      market: 21,
+      code: "601108",
+      options: [
+        {
+          value: 1, //Qot_Common.QotMarket_HK_Security
+          label: "HK",
+        },
+        {
+          value: 11, //Qot_Common.QotMarket_US_Security
+          label: "US",
+        },
+        {
+          value: 21, //Qot_Common.QotMarket_CNSH_Security
+          label: "SH",
+        },
+        {
+          value: 22, //Qot_Common.QotMarket_CNSZ_Security
+          label: "SZ",
+        },
+      ],
+
+      get_message: null,
+      date: [
+        dayjs().subtract(200, "day").format("YYYY-MM-DD"),
+        dayjs().format("YYYY-MM-DD"),
+      ],
+      chartTitlePlate: '所属板块',
+      chartTitleStock: ''
+    };
+  },
+
+  methods: {
+    getData: async function() {
+      this.websocket = dorequest(this.$store, async (msg) => {
+        console.log(`this.market: ${this.market}`)
+        console.log(`this.code: ${this.code}`)
+        console.log(`the msg: ${msg}`)
+
+        const northholding = await aliyunGet(`/northholding/${this.code}`, {
+          startDate: dateFormat(this.date[0]),
+          endDate: dateFormat(this.date[1]),
+        })
+        const klineMap = new Map();
+        const holdingMap = new Map();
+        const finalHoldingMap = new Map();
+
+        const securityLineRaw = await this.fetchHistoryKline({"code": this.code, "market": this.market})
+
+        northholding.data.rows.map((data) => {
+          holdingMap.set(dayjs(data.trade_date).format('YYYYMMDD'), data.holding_amt);
+        })
+
+        let preAmt = 0;
+        securityLineRaw.map((data) => {
+          const date = dayjs(data.time).format('YYYYMMDD')
+          if (!holdingMap.get(date)) {
+            finalHoldingMap.set(date, preAmt);
+          } else {
+            finalHoldingMap.set(date, holdingMap.get(date))
+            preAmt = holdingMap.get(date)
+          }
+          klineMap.set(date, data.closePrice * 3000000);
+        })
+
+        
+        let myChart = echarts.init(document.getElementById("chars-box"), "dark");
+        const holdingData = Array.from(finalHoldingMap.values());
+
+        const klineData = Array.from(klineMap.values());
+
+        console.log(`the legth of holdingData is ${holdingData.length}`)
+        console.log(`the legth of klineData is ${klineData.length}`)
+
+        myChart.setOption({  //动画的配置
+          series: [
+          {
+            smooth: true,
+            type: 'line',
+            data: holdingData
+          },
+          {
+            smooth: true,
+            type: 'line',
+            data: klineData
+          }],
+          tooltip: {
+            trigger: "axis"
+          },
+          yAxis: {
+            type: "value"
+          },
+          xAxis: [{
+            data: securityLineRaw.map((data) => {
+              return dayjs(data.time).format('YYYYMMDD')
+            })
+          }]
+        })
+
+        window.onresize = function() {
+          //自适应大小
+          myChart.resize();
+        };
+      }, 
+      (msg) => {
+        this.errMsg = msg
+      });
+    },
+
+    fetchHistoryKline(security) {
+      let beginTime = dateFormat(this.date[0]);
+      // if (security.code.startsWith("BK")) {
+      //   // 板块数据需要计算5日，或者15日涨跌幅，这里的数据多取一点。
+      //   beginTime = dateFormat(dayjs(this.date[0]).subtract(30, "day"))
+      // }
+      return this.websocket
+        .RequestHistoryKL({
+          c2s: {
+            rehabType: 1,
+            klType: 2,
+            security,
+            beginTime: dateFormat(beginTime),
+            endTime: dateFormat(this.date[1]),
+          },
+        })
+        .then((res) => {
+          return res.s2c.klList.map((item) => {
+            return {
+              ...item,
+              volume: item.volume.low ? item.volume.low : item.volume,
+              changeRate: `${item.changeRate.toFixed(2)} %`,
+            };
+          });
+        })
+        .catch((err) => {
+          console.log("err:", err);
+        });
+    },
+  },
+
+
+
   setup() {
     /// 声明定义一下echart
     let echart = echarts;
@@ -26,20 +202,6 @@ export default {
       chart.setOption({
         xAxis: {
           type: "category",
-          data: [
-            "一月",
-            "二月",
-            "三月",
-            "四月",
-            "五月",
-            "六月",
-            "七月",
-            "八月",
-            "九月",
-            "十月",
-            "十一月",
-            "十二月"
-          ]
         },
         tooltip: {
           trigger: "axis"
@@ -49,20 +211,6 @@ export default {
         },
         series: [
           {
-            data: [
-              820,
-              932,
-              901,
-              934,
-              1290,
-              1330,
-              1320,
-              801,
-              102,
-              230,
-              4321,
-              4129
-            ],
             type: "line",
             smooth: true
           }
@@ -78,3 +226,45 @@ export default {
   }
 };
 </script>
+<style rel="stylesheet/scss" lang="scss" scoped>
+  .el-input {
+    display: inline;
+  }
+
+  .el-range-editor {
+    margin-left: 30px;
+  }
+
+  .el-button {
+    margin-top: 30px;
+  }
+
+  :deep(#stock) {
+    display: inline;
+  }
+
+  :deep(#market) {
+    width: 70px;
+    margin-left: 10px;
+  }
+
+  :deep(#code) {
+    width: 100px;
+    margin-left: 5px;
+  }
+
+  :deep(#err) {
+    color: firebrick;
+    margin-top: 15px;
+  }
+
+  #output {
+    font-size: 14px;
+    text-align: left;
+    margin-top: 20px;
+    #content {
+      padding: 30px;
+      border: 1px solid #d8dfe6;
+    }
+  }
+</style>
