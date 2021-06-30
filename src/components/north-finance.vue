@@ -86,29 +86,29 @@ export default {
         })
         const klineMap = new Map();
         const holdingMap = new Map();
-        const finalHoldingMap = new Map();
+        // const finalHoldingMap = new Map();
 
-        const securityLineRaw = await this.fetchHistoryKline({"code": this.code, "market": this.market})
+        // const securityLineRaw = await this.fetchHistoryKline({"code": this.code, "market": this.market})
 
         northholding.data.rows.map((data) => {
           holdingMap.set(dayjs(data.trade_date).format('YYYYMMDD'), data.holding_amt);
         })
 
-        let preAmt = 0;
-        securityLineRaw.map((data) => {
-          const date = dayjs(data.time).format('YYYYMMDD')
-          if (!holdingMap.get(date)) {
-            finalHoldingMap.set(date, preAmt);
-          } else {
-            finalHoldingMap.set(date, holdingMap.get(date))
-            preAmt = holdingMap.get(date)
-          }
-          klineMap.set(date, data.closePrice * 3000000);
-        })
+        // let preAmt = 0;
+        // securityLineRaw.map((data) => {
+        //   const date = dayjs(data.time).format('YYYYMMDD')
+        //   if (!holdingMap.get(date)) {
+        //     finalHoldingMap.set(date, preAmt);
+        //   } else {
+        //     finalHoldingMap.set(date, holdingMap.get(date))
+        //     preAmt = holdingMap.get(date)
+        //   }
+        //   klineMap.set(date, data.closePrice * 3000000);
+        // })
 
         
         let myChart = echarts.init(document.getElementById("chars-box"), "dark");
-        const holdingData = Array.from(finalHoldingMap.values());
+        const holdingData = Array.from(holdingMap.values());
 
         const klineData = Array.from(klineMap.values());
 
@@ -121,11 +121,6 @@ export default {
             smooth: true,
             type: 'line',
             data: holdingData
-          },
-          {
-            smooth: true,
-            type: 'line',
-            data: klineData
           }],
           tooltip: {
             trigger: "axis"
@@ -134,8 +129,8 @@ export default {
             type: "value"
           },
           xAxis: [{
-            data: securityLineRaw.map((data) => {
-              return dayjs(data.time).format('YYYYMMDD')
+            data: northholding.data.rows.map((data) => {
+              return dayjs(data.trade_date).format('YYYYMMDD')
             })
           }]
         })
