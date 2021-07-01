@@ -3,7 +3,7 @@
     <el-tabs v-model="active" @tab-click="onClick">
       <el-tab-pane label="获取股票快照" name="get-security-snapshot-demo">获取股票快照</el-tab-pane>
       <el-tab-pane label="所属板块" name="get-security-plate">获取所属板块</el-tab-pane>
-      <el-tab-pane label="北向资金" name="north-finance">北向资金</el-tab-pane>
+      <el-tab-pane label="北向资金" name="north-finance">个股北向资金持仓和K线图</el-tab-pane>
       <el-tab-pane label="MACD策略" name="macd-strategy">MACD策略</el-tab-pane>
     </el-tabs>
     <div id="main">

@@ -21,8 +21,9 @@
         end-placeholder="结束日期"
         style="margin-left: 30px;">
       </el-date-picker>
+
+      <el-button id="submitBtn" type="primary" v-on:click="getData()">获取数据</el-button>
     </div>
-    <el-button type="primary" v-on:click="getData()">股票北向资金持仓</el-button>
     <div id="err">{{ errMsg }}</div>
     <!-- <el-space wrap>
       <div id="chars-box" style="width: 100%; height: 400px;">
@@ -48,7 +49,6 @@ import dayjs from "dayjs";
 import { aliyunGet } from "../service/http";
 import { dateFormat } from "../utils/format";
 import { dorequest } from '../utils/ftservice';
-import { init } from 'klinecharts'
 
 export default {
   name: "northFinance",
@@ -82,7 +82,9 @@ export default {
         dayjs().format("YYYY-MM-DD"),
       ],
       chartTitlePlate: '所属板块',
-      chartTitleStock: ''
+      chartTitleStock: '',
+      klineDates: [],
+      klineArray: []
     };
   },
   methods: {
@@ -100,23 +102,10 @@ export default {
         const holdingMap = new Map();
         // const finalHoldingMap = new Map();
 
-        const securityLineRaw = await this.fetchHistoryKline({"code": this.code, "market": this.market})
-        this.setupKline(securityLineRaw, this.stKLineChart)
+        // this.setupKline(securityLineRaw, this.stKLineChart)
         northholding.data.rows.map((data) => {
           holdingMap.set(dayjs(data.trade_date).format('YYYYMMDD'), data.holding_amt);
         })
-
-        // let preAmt = 0;
-        // securityLineRaw.map((data) => {
-        //   const date = dayjs(data.time).format('YYYYMMDD')
-        //   if (!holdingMap.get(date)) {
-        //     finalHoldingMap.set(date, preAmt);
-        //   } else {
-        //     finalHoldingMap.set(date, holdingMap.get(date))
-        //     preAmt = holdingMap.get(date)
-        //   }
-        //   klineMap.set(date, data.closePrice * 3000000);
-        // })
 
         const holdingData = Array.from(holdingMap.values());
 
@@ -125,7 +114,7 @@ export default {
         console.log(`the legth of holdingData is ${holdingData.length}`)
         console.log(`the legth of klineData is ${klineData.length}`)
 
-        this.myChart.setOption({  //动画的配置
+        this.northHoldingChart.setOption({  //动画的配置
           series: [
           {
             smooth: true,
@@ -145,9 +134,119 @@ export default {
           }]
         })
 
+        const securityLineRaw = await this.fetchHistoryKline({"code": this.code, "market": this.market})
+        this.klineArray = []
+        this.klineDates = []
+        securityLineRaw.map((data) => {
+          this.klineDates.push(dayjs(data.time).format("YYYY/MM/DD"));
+          this.klineArray.push([data.openPrice, data.closePrice, data.lowPrice, data.highPrice])
+        })
+        this.klineChart.setOption({
+          legend: {
+              data: ['日K', 'MA5', 'MA10', 'MA20', 'MA30'],
+              inactiveColor: '#777',
+          },
+          tooltip: {
+              trigger: 'axis',
+              axisPointer: {
+                  animation: false,
+                  type: 'cross',
+                  lineStyle: {
+                      color: '#376df4',
+                      width: 2,
+                      opacity: 1
+                  }
+              }
+          },
+          xAxis: {
+              type: 'category',
+              data: this.klineDates,
+              axisLine: { lineStyle: { color: '#8392A5' } }
+          },
+          yAxis: {
+              scale: true,
+              axisLine: { lineStyle: { color: '#8392A5' } },
+              splitLine: { show: false }
+          },
+          grid: {
+              bottom: 80
+          },
+          dataZoom: [{
+              textStyle: {
+                  color: '#8392A5'
+              },
+              handleIcon: 'path://M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+              dataBackground: {
+                  areaStyle: {
+                      color: '#8392A5'
+                  },
+                  lineStyle: {
+                      opacity: 0.8,
+                      color: '#8392A5'
+                  }
+              },
+              brushSelect: true
+          }, {
+              type: 'inside'
+          }],
+          series: [
+              {
+                type: 'candlestick',
+                name: '日K',
+                data: this.klineArray,
+                itemStyle: {
+                    color: '#FD1050',
+                    color0: '#0CF49B',
+                    borderColor: '#FD1050',
+                    borderColor0: '#0CF49B'
+                }
+              },
+              {
+                name: 'MA5',
+                type: 'line',
+                data: this.calculateMA(5, this.klineArray),
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    width: 1
+                }
+              },
+              {
+                name: 'MA10',
+                type: 'line',
+                data: this.calculateMA(10, this.klineArray),
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    width: 1
+                }
+              },
+              {
+                name: 'MA20',
+                type: 'line',
+                data: this.calculateMA(20, this.klineArray),
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    width: 1
+                }
+              },
+              {
+                name: 'MA30',
+                type: 'line',
+                data: this.calculateMA(30, this.klineArray),
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    width: 1
+                }
+              }
+          ]
+        })
         window.onresize = function() {
           //自适应大小
-          this.myChart.resize();
+          this.northHoldingChart.resize();
+          this.klineChart.resize();
         };
       }, 
       (msg) => {
@@ -185,120 +284,27 @@ export default {
         });
     },
 
-    setupKline(rawLine, kLineChart) {
-      const plateLine = rawLine.map((item) => {
-          return {
-            close: item.closePrice,
-            high: item.highPrice,
-            low: item.lowPrice,
-            open: item.openPrice,
-            timestamp: item.timestamp * 1000,
-            turnover: item.turnover,
-            volume: item.volume,
-            changeRate: item.changeRate
-          };
-        });
-        console.log(`the plateLine is: ${plateLine}`)
-        kLineChart.setStyleOptions({
-          xAxis: {
-            show: true,
-            height: 30,
-            axisLine: {
-              show: true,
-              color: '#888888',
-              size: 1
-            },
-            tickText: {
-              show: true,
-              color: '#D9D9D9',
-              family: 'Helvetica Neue',
-              weight: 'normal',
-              size: 12,
-              paddingTop: 3,
-              paddingBottom: 6
-            },
-            tickLine: {
-              show: true,
-              size: 1,
-              length: 3,
-              color: '#888888'
+    calculateMA(dayCount, data) {
+        var result = [];
+        for (var i = 0, len = data.length; i < len; i++) {
+            if (i < dayCount) {
+                result.push('-');
+                continue;
             }
-          },
-          candle: {
-            bar: {
-              upColor: '#EF5350',
-              downColor: '#26A69A',
-              noChangeColor: '#888888'
-            },
-            // 提示  
-            tooltip: {
-              // 'always' | 'follow_cross' | 'none'
-              showRule: 'follow_cross',
-              // 'standard' | 'rect'
-              showType: 'rect',
-              labels: ['时间', '开', '收', '高', '低', '成交量', '涨跌幅'],
-              // 可以是数组，也可以是方法，如果是方法则需要返回一个数组
-              // 数组和方法返回的数组格式为:
-              // [xxx, xxx, ......]或者[{ color: '#fff', value: xxx }, { color: '#000', value: xxx }, .......]
-              values: kLineData => {
-                return [
-                  {
-                    value: kLineData['timestamp']
-                  },
-                  {
-                    value: kLineData['open']
-                  },
-                  {
-                    value: kLineData['close']
-                  },
-                  {
-                    value: kLineData['high']
-                  },
-                  {
-                    value: kLineData['low']
-                  },
-                  {
-                    value: kLineData['volume']
-                  },
-                  {
-                    value: kLineData['changeRate']
-                  },
-                ]
-              },
-              defaultValue: 'n/a',
-              rect: {
-                paddingLeft: 0,
-                paddingRight: 0,
-                paddingTop: 0,
-                paddingBottom: 6,
-                offsetLeft: 8,
-                offsetTop: 8,
-                offsetRight: 8,
-                borderRadius: 4,
-                borderSize: 1,
-                borderColor: '#e9ebef',
-                fillColor: 'rgba(17, 17, 17, .3)'
-              },
-              text: {
-                size: 12,
-                family: 'Helvetica Neue',
-                weight: 'normal',
-                color: '#ffffff',
-                marginLeft: 8,
-                marginTop: 6,
-                marginRight: 8,
-                marginBottom: 0
-              }
+            var sum = 0;
+            for (var j = 0; j < dayCount; j++) {
+                sum += data[i - j][1];
             }
-          }
-        })
-        kLineChart.applyNewData(plateLine)
+            result.push((sum / dayCount).toFixed(2));
+        }
+        return result;
     }
   },
 
   mounted: function () {
-    this.stKLineChart = init('chart-type-stock-k-line')
-    this.myChart = echarts.init(document.getElementById("chars-box"), "dark");
+    // this.stKLineChart = init('chart-type-stock-k-line')
+    this.northHoldingChart = echarts.init(document.getElementById("chars-box"), "dark");
+    this.klineChart = echarts.init(document.getElementById("chart-type-stock-k-line"), "dark");
   },
 
   setup() {
@@ -306,7 +312,7 @@ export default {
     let echart = echarts;
 
     onMounted(() => {
-      initChart();
+      // initChart();
     });
 
     onUnmounted(() => {
@@ -314,33 +320,32 @@ export default {
     });
 	
     // 基础配置一下Echarts
-    function initChart() {
-      let chart = echart.init(document.getElementById("chars-box"), "dark");
-      // 把配置和数据放这里
-      chart.setOption({
-        xAxis: {
-          type: "category",
-        },
-        tooltip: {
-          trigger: "axis"
-        },
-        yAxis: {
-          type: "value"
-        },
-        series: [
-          {
-            type: "line",
-            smooth: true
-          }
-        ]
-      });
-      window.onresize = function() {
-        //自适应大小
-        chart.resize();
-      };
-    }
-
-    return { initChart };
+    // function initChart() {
+    //   let chart = echart.init(document.getElementById("chars-box"), "dark");
+    //   // 把配置和数据放这里
+    //   chart.setOption({
+    //     xAxis: {
+    //       type: "category",
+    //     },
+    //     tooltip: {
+    //       trigger: "axis"
+    //     },
+    //     yAxis: {
+    //       type: "value"
+    //     },
+    //     series: [
+    //       {
+    //         type: "line",
+    //         smooth: true
+    //       }
+    //     ]
+    //   });
+    //   window.onresize = function() {
+    //     //自适应大小
+    //     chart.resize();
+    //   };
+    // }
+    // return { initChart };
   }
 };
 </script>
@@ -353,8 +358,8 @@ export default {
     margin-left: 30px;
   }
 
-  .el-button {
-    margin-top: 30px;
+  #submitBtn {
+    margin-left: 30px;
   }
 
   :deep(#stock) {
