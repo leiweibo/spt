@@ -8,7 +8,13 @@ import {
   ElSelect, 
   ElTag,
   ElDatePicker,
-  ElSpace
+  ElSpace,
+  ElMenu,
+  ElMenuItem,
+  ElSubmenu,
+  ElTableColumn,
+  ElTable,
+  ElLoading,
 } from 'element-plus'
 
 export default (app) => {
@@ -22,4 +28,10 @@ export default (app) => {
   app.use(ElTag)
   app.use(ElDatePicker)
   app.use(ElSpace)
+  app.use(ElMenu)
+  app.use(ElMenuItem)
+  app.use(ElSubmenu)
+  app.use(ElTable)
+  app.use(ElTableColumn)
+  app.use(ElLoading)
 }

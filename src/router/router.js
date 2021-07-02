@@ -2,12 +2,13 @@ import { createWebHistory, createRouter } from "vue-router";
 import getSecuritySnapshotDemo from '../components/get-security-snapshot-demo'
 import getSecurityPlate from '../components/get-security-plate'
 import northFinance from '../components/north-finance'
+import northNewShareHolding from '../components/north-new-shareholding'
 
 const routes = [
   {
     path: '/',
-    name: 'getSecuritySnapshotDemo',
-    component: getSecuritySnapshotDemo
+    name: 'index',
+    component: northFinance
   },
   {
     path: '/get-security-snapshot-demo',
@@ -23,6 +24,11 @@ const routes = [
     path: '/north-finance',
     name: 'northFinance',
     component: northFinance
+  },
+  {
+    path: '/north-new-shareholding',
+    name: 'northNewShareHold',
+    component: northNewShareHolding
   }
 ]
 
