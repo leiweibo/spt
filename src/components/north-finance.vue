@@ -1,5 +1,5 @@
 <template>
-  <NorthHoldingQuota />
+  <NorthHoldingQuota :showInput="true"/>
 </template>
 <script>
 import NorthHoldingQuota from "./north-holding-quota"

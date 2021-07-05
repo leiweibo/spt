@@ -9,33 +9,39 @@
       <el-button id="submitBtn" type="primary" v-on:click="getData()">获取该月建仓数据</el-button>
     </div>
     <div id="err">{{ errMsg }}</div>
-    <div id="output">
-      <el-table
-        :data="tableData"
-        v-loading.fullscreen.lock="fullscreenLoading"
-        border
-        height="720"
-        :row-class-name="tableRowClassName"
-        style="width: 30%">
-        <el-table-column
-          prop="securityCode"
-          label="Security Code"
-          width="180">
-        </el-table-column>
-        <el-table-column
-          prop="securityName"
-          label="Security Name"
-          width="180">
-        </el-table-column>
-        <el-table-column
-          prop="securityMktShowValue"
-          label="Market">
-        </el-table-column>
-      </el-table>
-      <el-pagination
-        layout="total"
-        :total="totalCount" />
-    </div>
+    <el-space wrap>
+      <div id="output">
+        <el-table
+          :data="tableData"
+          v-loading.fullscreen.lock="fullscreenLoading"
+          border
+          height="768"
+          :row-class-name="tableRowClassName"
+          style="width: 620px;"
+          @row-click="onRowClicked">
+          <el-table-column
+            prop="securityCode"
+            label="Security Code"
+            width="180">
+          </el-table-column>
+          <el-table-column
+            prop="securityName"
+            label="Security Name"
+            width="180">
+          </el-table-column>
+          <el-table-column
+            prop="securityMktShowValue"
+            label="Market">
+          </el-table-column>
+        </el-table>
+        <el-pagination
+          layout="total"
+          :total="totalCount" />
+      </div>
+      <div>
+        <NorthHoldingQuota v-if="renderComponent" :showInput = "false" :passedData="passedData"/>
+      </div>
+    </el-space>
   </div>
 </template>
 <script>
@@ -45,9 +51,11 @@ import { onUnmounted, onMounted } from 'vue';
 import dayjs from "dayjs";
 import { aliyunGet } from "../service/http";
 import { dateFormat } from "../utils/format";
+import NorthHoldingQuota from "./north-holding-quota"
 
 export default {
   name: "northNewShareHolding",
+  components: {NorthHoldingQuota},
   data() {
     return {
       errMsg: "",
@@ -59,13 +67,20 @@ export default {
       klineDates: [],
       klineArray: [],
       fullscreenLoading: false,
-      totalCount: ''
+      totalCount: 0,
+      passedData: null,
+      renderComponent: true
     };
   },
   methods: {
     getData: async function() {
       this.fullscreenLoading = true;
-      console.log(this.date);
+      this.renderComponent = false;
+      this.passedData = null;
+      this.$nextTick(() => {
+        this.renderComponent = true
+      })
+
       const getDiffDataResult = await aliyunGet(`/northreport/monthly/diff`, {
         d: this.date
       });
@@ -73,17 +88,30 @@ export default {
       this.totalCount = getDiffDataResult.count;
 
       this.tableData = getDiffDataResult.result.map((item) => {
-        console.log(item.securityMkt);
-       return {
-         ...item, 
-        securityMktShowValue: item.securityMkt === '22' ? '深市' : '沪市'
-       }
+        return {
+          ...item, 
+          securityMktShowValue: item.securityMkt === '22' ? '深市' : '沪市'
+        }
       })
       this.fullscreenLoading = false;
     },
-
+    onRowClicked(row) {
+      console.log(`the dateeeeeee is :${this.date}`)
+      const d0 = dayjs(this.date).set('date', 1).format('YYYY-MM-DD')
+      const d1 = dayjs(this.date).set('date', 1).add(1, 'month').subtract(1, 'day').format('YYYY-MM-DD')
+      console.log(`the dateeeeeee is :${this.date}, ${d0}, ${d1}`)
+      this.renderComponent = false;
+      this.passedData = {
+        code: row.securityCode,
+        market: row.securityMkt,
+        date0: d0,
+        date1: d1
+      },
+      this.$nextTick(() => {
+        this.renderComponent = true
+      })
+    },
     tableRowClassName({row}) {
-      console.log(row.securityMkt);
       if (row.securityMkt === '21') {
         return 'warning-row';
       } else if (row.securityMkt === '22') {

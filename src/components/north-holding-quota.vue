@@ -1,6 +1,6 @@
 <template>
   <div id="main">
-    <div id="input" v-show="!pd">
+    <div id="input" v-show="!pd && si">
       <div id="stock">
         股票
         <el-select id="market" v-model="market">
@@ -24,14 +24,15 @@
 
       <el-button id="submitBtn" type="primary" v-on:click="getData()">获取数据</el-button>
       <div id="err">{{ errMsg }}</div>
-    
-      
+    </div>
+    <div v-show="pd">
+      <span class="demonstration">{{resultShowValue}}</span>
     </div>
     <div id="output">
         <div id="content" wrap>
-          <div id="chars-box" style="width: 100%; height: 400px;">
+          <div id="chars-box" style="width: 100%; height: 340px;">
           </div>
-          <div id="chart-type-stock-k-line" style="width: 100%; height: 400px; margin-top: 50px"/>
+          <div id="chart-type-stock-k-line" style="width: 100%; height: 340px; margin-top: 30px"/>
         </div>
       </div>
   </div>
@@ -49,7 +50,8 @@ import { dorequest } from '../utils/ftservice';
 export default {
   name: 'NorthHoldingQuota',
   props: [
-    'passedData'
+    'passedData',
+    'showInput'
   ],
   data() {
     return {
@@ -84,10 +86,12 @@ export default {
       chartTitleStock: '',
       klineDates: [],
       klineArray: [],
+      resultShowValue: 'loading.....'
     };
   },
   methods: {
     getData: async function() {
+      this.resultShowValue = 'loading......'
       this.websocket = dorequest(this.$store, async (msg) => {
         console.log(`this.market: ${this.market}`)
         console.log(`this.code: ${this.code}`)
@@ -135,6 +139,7 @@ export default {
         })
 
         const securityLineRaw = await this.fetchHistoryKline({"code": this.code, "market": this.market})
+        this.resultShowValue = this.code;
         this.klineArray = []
         this.klineDates = []
         securityLineRaw.map((data) => {
@@ -332,7 +337,7 @@ export default {
       // }
       return props.passedData;
     }
-    return { pd: initChart() };
+    return { pd: initChart(), si: props.showInput };
   },
 
   created() {
@@ -377,10 +382,8 @@ export default {
     font-size: 14px;
     text-align: left;
     margin-top: 20px;
-    #content {
-      padding: 30px;
-      border: 1px solid #d8dfe6;
-    }
+    width: 1080px;
+    
   }
   .k-line-chart-container {
     display: flex;
