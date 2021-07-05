@@ -8,7 +8,7 @@ const routes = [
   {
     path: '/',
     name: 'index',
-    component: northFinance
+    component: northNewShareHolding
   },
   {
     path: '/get-security-snapshot-demo',

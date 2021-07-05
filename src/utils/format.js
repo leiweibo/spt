@@ -4,6 +4,10 @@ export const dateFormat = (date) => {
   return dayjs(date).format("YYYY-MM-DD");
 };
 
+export const dateFormat2 = (date) => {
+  return dayjs(date).format("YYYYMMDD");
+};
+
 export const numberFormat = (value) => {
   if (!value) {
     return "-"

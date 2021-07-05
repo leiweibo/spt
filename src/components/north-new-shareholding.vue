@@ -32,6 +32,9 @@
           label="Market">
         </el-table-column>
       </el-table>
+      <el-pagination
+        layout="total"
+        :total="totalCount" />
     </div>
   </div>
 </template>
@@ -56,6 +59,7 @@ export default {
       klineDates: [],
       klineArray: [],
       fullscreenLoading: false,
+      totalCount: ''
     };
   },
   methods: {
@@ -65,12 +69,15 @@ export default {
       const getDiffDataResult = await aliyunGet(`/northreport/monthly/diff`, {
         d: this.date
       });
+
+      this.totalCount = getDiffDataResult.count;
+
       this.tableData = getDiffDataResult.result.map((item) => {
         console.log(item.securityMkt);
        return {
          ...item, 
         securityMktShowValue: item.securityMkt === '22' ? '深市' : '沪市'
-       } 
+       }
       })
       this.fullscreenLoading = false;
     },

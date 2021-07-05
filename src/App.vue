@@ -52,7 +52,7 @@ export default defineComponent ({
   },
   data() {
     return {
-      active: 'north-finance'
+      active: 'north-new-shareholding'
     };
   },
   setup() {
