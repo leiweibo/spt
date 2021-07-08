@@ -3,6 +3,7 @@ import getSecuritySnapshotDemo from '../components/get-security-snapshot-demo'
 import getSecurityPlate from '../components/get-security-plate'
 import northFinance from '../components/north-finance'
 import northNewShareHolding from '../components/north-new-shareholding'
+import getSecurityInfo from '../components/get-security-info'
 
 const routes = [
   {
@@ -29,6 +30,11 @@ const routes = [
     path: '/north-new-shareholding',
     name: 'northNewShareHold',
     component: northNewShareHolding
+  },
+  {
+    path: '/get-security-info',
+    name: 'getSecurityInfo',
+    component: getSecurityInfo,
   }
 ]
 
