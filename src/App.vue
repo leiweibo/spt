@@ -22,18 +22,9 @@
       
       <el-submenu index="2">
         <template #title>股票信息查看</template>
-        <el-menu-item index="get-security-snapshot-demo">股票快照</el-menu-item>
         <el-menu-item index="get-security-info">选股核心指标</el-menu-item>
-        <el-menu-item index="2-3">item three</el-menu-item>
-        <el-submenu index="2-4">
-          <template #title disabled>待定2</template>
-          <el-menu-item index="2-4-1">item one</el-menu-item>
-          <el-menu-item index="2-4-2">item two</el-menu-item>
-          <el-menu-item index="2-4-3">item three</el-menu-item>
-        </el-submenu>
       </el-submenu>
-      <el-menu-item index="3" disabled>待定3</el-menu-item>
-      <el-menu-item index="4" disabled>待定4</el-menu-item>
+      <el-menu-item index="get-security-snapshot-demo">实验室</el-menu-item>
     </el-menu>
     <div id="main">
       <router-view />

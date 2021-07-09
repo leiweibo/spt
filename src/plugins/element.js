@@ -18,6 +18,8 @@ import {
   ElPagination,
   ElDescriptions,
   ElDescriptionsItem,
+  ElCol,
+  ElRow,
 } from 'element-plus'
 
 export default (app) => {
@@ -40,4 +42,6 @@ export default (app) => {
   app.use(ElPagination)
   app.use(ElDescriptionsItem)
   app.use(ElDescriptions)
+  app.use(ElCol)
+  app.use(ElRow)
 }

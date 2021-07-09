@@ -13,31 +13,54 @@
         </el-select>
       </div>
       <el-input id="code" v-model="code" placeholder="股票代码"></el-input>
+      <el-button type="primary" style="margin-left: 30px;" v-on:click="getKeyIndex()">获取股票关键指标</el-button>
     </div>
-    <el-button type="primary" v-on:click="getKeyIndex()">获取股票关键指标</el-button>
     <span id="err">{{ errMsg }}</span>
     <div id="output">
       <el-tag effect="dark">{{ reportDate }}</el-tag>
       <div id="content">
-        <el-descriptions title="核心指标" border>
-          <el-descriptions-item label="总市值">{{ totalMktValue }}</el-descriptions-item>
-          <el-descriptions-item label="资产负债率"> {{ debtRatio }}</el-descriptions-item>
-          <el-descriptions-item label="质押比例">{{ pledgeRatio }}</el-descriptions-item>
-          <el-descriptions-item label="商誉/净资产">{{ goodWillRatio }}</el-descriptions-item>
-        </el-descriptions>
+        <el-row>
+          <el-col :span="11">
+            <el-descriptions title="核心指标" border>
+              <el-descriptions-item label="总市值">{{ totalMktValue }}</el-descriptions-item>
+              <el-descriptions-item label="资产负债率"> {{ debtRatio }}</el-descriptions-item>
+              <el-descriptions-item label="质押比例">{{ pledgeRatio }}</el-descriptions-item>
+              <el-descriptions-item label="商誉/净资产">{{ goodWillRatio }}</el-descriptions-item>
+            </el-descriptions>
+          </el-col>
+          <el-col class="line" :span="2"></el-col>
+          <el-col :span="11">
+            <el-descriptions title="资产负债相关" border>
+            <el-descriptions-item label="短期借款">{{ shortLoan }}</el-descriptions-item>
+            <el-descriptions-item label="长期借款">{{ longLoan }}</el-descriptions-item>
+            <el-descriptions-item label="应付债券">{{ boundPayable }}</el-descriptions-item>
 
-        <el-descriptions title="资产负债相关" border style="margin-top: 30px;">
-          <el-descriptions-item label="短期借款">{{ shortLoan }}</el-descriptions-item>
-          <el-descriptions-item label="长期借款">{{ longLoan }}</el-descriptions-item>
-          <el-descriptions-item label="应付债券">{{ boundPayable }}</el-descriptions-item>
+            <el-descriptions-item label="货币资金">{{ cash }}</el-descriptions-item>
+            <el-descriptions-item label="应收账款"> 待获取 </el-descriptions-item>
+            <el-descriptions-item label="预付款项"> 待获取 </el-descriptions-item>
+            <el-descriptions-item label="净利润">{{ netProfit }}</el-descriptions-item>
+          </el-descriptions>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="11">
+            <div id="roe-chart" style="width: 100%; height: 340px; margin-top: 30px"/>
+          </el-col>
+          <el-col class="line" :span="2"></el-col>
+          <el-col :span="11">
+            <div id="netprofit-chart" style="width: 100%; height: 340px; margin-top: 30px"/>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="11">
+            <div id="operation-cash-chart" style="width: 100%; height: 340px; margin-top: 30px"/>
+          </el-col>
 
-          <el-descriptions-item label="货币资金">{{ cash }}</el-descriptions-item>
-          <el-descriptions-item label="应收账款"> 待获取 </el-descriptions-item>
-          <el-descriptions-item label="预付款项"> 待获取 </el-descriptions-item>
-          <el-descriptions-item label="净利润">{{ netProfit }}</el-descriptions-item>
-        </el-descriptions>
-
-        <div id="roe-chart" style="width: 100%; height: 340px; margin-top: 30px"/>
+          <el-col class="line" :span="2"></el-col>
+          <el-col :span="11">
+            <div id="netgrossprofit-chart" style="width: 100%; height: 340px; margin-top: 30px"/>
+          </el-col>
+        </el-row>
       </div>
     </div>
   </div>
@@ -94,6 +117,9 @@ export default {
   created() {},
   mounted() {
     this.roeChart = echarts.init(document.getElementById("roe-chart"))
+    this.netProfitChart = echarts.init(document.getElementById("netprofit-chart"))
+    this.operationCashChart = echarts.init(document.getElementById("operation-cash-chart"))
+    this.netGrossProfitChart = echarts.init(document.getElementById("netgrossprofit-chart"))
   },
   unmounted() {},
   methods: {
@@ -109,14 +135,14 @@ export default {
       this.goodWillRatio = (stkInfoData.finalComposedData[0].goodWillRatio * 100).toFixed(2) + " %"
       this.cash = numberFormat(stkInfoData.finalComposedData[0].cash)
       this.netProfit = numberFormat(stkInfoData.finalComposedData[0].netProfit)
-      this.reportDate = stkInfoData.finalComposedData[0].reportDate;
+      this.reportDate = stkInfoData.securityName + " " + stkInfoData.finalComposedData[0].reportDate;
       this.shortLoan = numberFormat(stkInfoData.finalComposedData[0].shortLoan);
       this.longLoan = numberFormat(stkInfoData.finalComposedData[0].longLoan);
       this.boundPayable = numberFormat(stkInfoData.finalComposedData[0].boundPayable);
 
       this.roeChart.setOption({  //动画的配置
           title: {
-            text: 'ROE变化表',
+            text: 'ROE',
             left: 'center',
             align: 'right'
           },
@@ -124,7 +150,7 @@ export default {
           {
             smooth: true,
             type: 'bar',
-            barWidth: '60%',
+            barWidth: '20%',
             data: stkInfoData.keyIndexData.map((d) => d.roe.toFixed(2)).reverse()
           }],
           tooltip: {
@@ -140,11 +166,88 @@ export default {
           }]
         });
 
+        this.netProfitChart.setOption({
+          title: {
+            text: '净利润',
+            left: 'center',
+            align: 'right'
+          },
+          series: [
+          {
+            smooth: true,
+            type: 'bar',
+            barWidth: '20%',
+            data: stkInfoData.keyIndexData.map((d) => d.netProfit.toFixed(2)).reverse()
+          }],
+          tooltip: {
+            trigger: "axis"
+          },
+          yAxis: {
+            type: "value"
+          },
+          xAxis: [{
+            data: stkInfoData.keyIndexData.map((data) => {
+              return data.reportDate
+            }).reverse()
+          }]
+        })
+        this.operationCashChart.setOption({
+          title: {
+            text: '经营现金流',
+            left: 'center',
+            align: 'right'
+          },
+          series: [
+          {
+            smooth: true,
+            type: 'bar',
+            barWidth: '20%',
+            data: stkInfoData.operationCashFlowData.map((d) => d.netCashflow).reverse()
+          }],
+          tooltip: {
+            trigger: "axis"
+          },
+          yAxis: {
+            type: "value"
+          },
+          xAxis: [{
+            data: stkInfoData.operationCashFlowData.map((data) => {
+              return data.reportDate
+            }).reverse()
+          }]
+        })
+        this.netGrossProfitChart.setOption({
+          title: {
+            text: '毛利率',
+            left: 'center',
+            align: 'right'
+          },
+          series: [
+          {
+            smooth: true,
+            type: 'bar',
+            barWidth: '20%',
+            data: stkInfoData.keyIndexData.map((d) => d.grossProfit).reverse()
+          }],
+          tooltip: {
+            trigger: "axis"
+          },
+          yAxis: {
+            type: "value"
+          },
+          xAxis: [{
+            data: stkInfoData.keyIndexData.map((data) => {
+              return data.reportDate
+            }).reverse()
+          }]
+        })
         window.onresize = function() {
           this.roeChart.resize();
+          this.netProfitChart.resize();
+          this.operationCashChart.resize();
         };
-      
     },
+
   },
 };
 </script>
