@@ -45,7 +45,7 @@ import { onUnmounted, onMounted } from 'vue';
 import dayjs from "dayjs";
 import { aliyunGet } from "../service/http";
 import { dateFormat } from "../utils/format";
-import { dorequest } from '../utils/ftservice';
+import { dorequest, calculateMA, fetchHistoryKline } from '../utils/ftservice';
 
 export default {
   name: 'NorthHoldingQuota',
@@ -138,7 +138,7 @@ export default {
           }]
         })
 
-        const securityLineRaw = await this.fetchHistoryKline({"code": this.code, "market": this.market})
+        const securityLineRaw = await fetchHistoryKline(this.websocket, {"code": this.code, "market": this.market}, this.date[0], this.date[1])
         this.resultShowValue = this.code;
         this.klineArray = []
         this.klineDates = []
@@ -209,7 +209,7 @@ export default {
               {
                 name: 'MA5',
                 type: 'line',
-                data: this.calculateMA(5, this.klineArray),
+                data: calculateMA(5, this.klineArray),
                 smooth: true,
                 showSymbol: false,
                 lineStyle: {
@@ -219,7 +219,7 @@ export default {
               {
                 name: 'MA10',
                 type: 'line',
-                data: this.calculateMA(10, this.klineArray),
+                data: calculateMA(10, this.klineArray),
                 smooth: true,
                 showSymbol: false,
                 lineStyle: {
@@ -229,7 +229,7 @@ export default {
               {
                 name: 'MA20',
                 type: 'line',
-                data: this.calculateMA(20, this.klineArray),
+                data: calculateMA(20, this.klineArray),
                 smooth: true,
                 showSymbol: false,
                 lineStyle: {
@@ -239,7 +239,7 @@ export default {
               {
                 name: 'MA30',
                 type: 'line',
-                data: this.calculateMA(30, this.klineArray),
+                data: calculateMA(30, this.klineArray),
                 smooth: true,
                 showSymbol: false,
                 lineStyle: {
@@ -258,52 +258,6 @@ export default {
         this.errMsg = msg
       });
     },
-
-    fetchHistoryKline(security) {
-      let beginTime = dateFormat(this.date[0]);
-      // if (security.code.startsWith("BK")) {
-      //   // 板块数据需要计算5日，或者15日涨跌幅，这里的数据多取一点。
-      //   beginTime = dateFormat(dayjs(this.date[0]).subtract(30, "day"))
-      // }
-      return this.websocket
-        .RequestHistoryKL({
-          c2s: {
-            rehabType: 1,
-            klType: 2,
-            security,
-            beginTime: dateFormat(beginTime),
-            endTime: dateFormat(this.date[1]),
-          },
-        })
-        .then((res) => {
-          return res.s2c.klList.map((item) => {
-            return {
-              ...item,
-              volume: item.volume.low ? item.volume.low : item.volume,
-              changeRate: `${item.changeRate.toFixed(2)} %`,
-            };
-          });
-        })
-        .catch((err) => {
-          console.log("err:", err);
-        });
-    },
-
-    calculateMA(dayCount, data) {
-        var result = [];
-        for (var i = 0, len = data.length; i < len; i++) {
-            if (i < dayCount) {
-                result.push('-');
-                continue;
-            }
-            var sum = 0;
-            for (var j = 0; j < dayCount; j++) {
-                sum += data[i - j][1];
-            }
-            result.push((sum / dayCount).toFixed(2));
-        }
-        return result;
-    }
   },
 
   mounted: function () {
