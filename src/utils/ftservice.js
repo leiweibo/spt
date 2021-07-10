@@ -23,6 +23,18 @@ const dorequest = (store, dologinsuc, dologinfail)=> {
   return websocket
 };
 
+const getOwnerPlate = function(websocket, security) {
+  console.log('start to get plate.')
+  return websocket
+    .GetOwnerPlate(
+      {
+        c2s: {
+          securityList: [security],
+        }
+      },
+    );
+}
+
 const fetchHistoryKline = function(websocket, security, beginDate, endDate) {
   // if (security.code.startsWith("BK")) {
   //   // 板块数据需要计算5日，或者15日涨跌幅，这里的数据多取一点。
@@ -68,4 +80,4 @@ const calculateMA = function(dayCount, data) {
     return result;
 }
 
-export {dorequest, calculateMA, fetchHistoryKline};
+export {dorequest, calculateMA, fetchHistoryKline, getOwnerPlate};
