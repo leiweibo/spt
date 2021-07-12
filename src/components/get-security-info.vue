@@ -210,22 +210,44 @@ export default {
         this.netProfitChart.setOption({
           title: {
             text: '净利润',
-            left: 'center',
+            left: 'left',
             align: 'right'
           },
+          legend: {
+            data: ['净利润', '净利润增长率%']
+          },
           series: [
-          {
-            smooth: true,
-            type: 'bar',
-            barWidth: '20%',
-            data: stkInfoData.keyIndexData.map((d) => d.netProfit.toFixed(2)).reverse()
-          }],
+            { 
+              name: '净利润',
+              smooth: true,
+              type: 'bar',
+              barWidth: '20%',
+              yAxisIndex: 0,
+              data: stkInfoData.keyIndexData.map((d) => d.netProfit.toFixed(2)).reverse()
+            },
+            {
+              name: '净利润增长率%',
+              type: 'line',
+              yAxisIndex: 1,
+              data: stkInfoData.keyIndexData.map((d) => d.netProfiltRatio).reverse()
+            },
+          ],
           tooltip: {
             trigger: "axis"
           },
-          yAxis: {
-            type: "value"
+          grid: {
+            show: false,
           },
+          yAxis: [
+            {
+              name: "净利润",
+              type: "value"
+            },
+            {
+              name: "净利润增长率%",
+              type: "value",
+            }
+          ],
           xAxis: [{
             data: stkInfoData.keyIndexData.map((data) => {
               return data.reportDate
