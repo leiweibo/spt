@@ -1,8 +1,8 @@
 import { calculateMA, fetchHistoryKline } from './ftservice';
 import dayjs from "dayjs";
+import { aliyunGet } from '../service/http';
 
-const setupKlineCharts = async function(websocket, title, klineChart, security, startDate, endDate, titleClickFunc) {
-  const securityLineRaw = await fetchHistoryKline(websocket, security, startDate, endDate)
+const setup = async function(security, securityLineRaw, title, klineChart, titleClickFunc) {
   const klineArray = []
   const klineDates = []
   securityLineRaw.map((data) => {
@@ -127,4 +127,20 @@ const setupKlineCharts = async function(websocket, title, klineChart, security, 
   return security.code;
 }
 
-export { setupKlineCharts };
+
+const setupKlineCharts = async function(websocket, title, klineChart, security, startDate, endDate, titleClickFunc) {
+    const securityLineRaw = await fetchHistoryKline(websocket, security, startDate, endDate)
+    return setup(security, securityLineRaw, title, klineChart, titleClickFunc)
+}
+
+const setupKlineCharts2 = async function(title, klineChart, security, startDate, endDate, titleClickFunc) {
+    const securityLineRaw = await aliyunGet('/hq/kline', {
+        "code": (security.market == 21? 1 : 0)+ "." + security.code,
+        'startdate': startDate,
+        'enddate': endDate
+    })
+    console.log(securityLineRaw);
+    return setup(security, securityLineRaw.data.rows, title, klineChart, titleClickFunc)
+}
+
+export { setupKlineCharts, setupKlineCharts2 };

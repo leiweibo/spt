@@ -50,7 +50,6 @@ import * as echarts from "echarts";
 import { onUnmounted, onMounted } from 'vue';
 import dayjs from "dayjs";
 import { aliyunGet } from "../service/http";
-import { dateFormat } from "../utils/format";
 import NorthHoldingQuota from "./north-holding-quota"
 
 export default {
@@ -98,7 +97,7 @@ export default {
     onRowClicked(row) {
       console.log(`the dateeeeeee is :${this.date}`)
       const d0 = dayjs(this.date).set('date', 1).format('YYYY-MM-DD')
-      const d1 = dayjs(this.date).set('date', 1).add(1, 'month').subtract(1, 'day').format('YYYY-MM-DD')
+      const d1 = dayjs().format('YYYY-MM-DD')
       console.log(`the dateeeeeee is :${this.date}, ${d0}, ${d1}`)
       this.renderComponent = false;
       this.passedData = {
@@ -119,52 +118,6 @@ export default {
       }
       return '';
     },
-
-    fetchHistoryKline(security) {
-      let beginTime = dateFormat(this.date[0]);
-      // if (security.code.startsWith("BK")) {
-      //   // 板块数据需要计算5日，或者15日涨跌幅，这里的数据多取一点。
-      //   beginTime = dateFormat(dayjs(this.date[0]).subtract(30, "day"))
-      // }
-      return this.websocket
-        .RequestHistoryKL({
-          c2s: {
-            rehabType: 1,
-            klType: 2,
-            security,
-            beginTime: dateFormat(beginTime),
-            endTime: dateFormat(this.date[1]),
-          },
-        })
-        .then((res) => {
-          return res.s2c.klList.map((item) => {
-            return {
-              ...item,
-              volume: item.volume.low ? item.volume.low : item.volume,
-              changeRate: `${item.changeRate.toFixed(2)} %`,
-            };
-          });
-        })
-        .catch((err) => {
-          console.log("err:", err);
-        });
-    },
-
-    calculateMA(dayCount, data) {
-        var result = [];
-        for (var i = 0, len = data.length; i < len; i++) {
-            if (i < dayCount) {
-                result.push('-');
-                continue;
-            }
-            var sum = 0;
-            for (var j = 0; j < dayCount; j++) {
-                sum += data[i - j][1];
-            }
-            result.push((sum / dayCount).toFixed(2));
-        }
-        return result;
-    }
   },
 
 

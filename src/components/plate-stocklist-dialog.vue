@@ -63,8 +63,8 @@
 
 <script>
   import dayjs from 'dayjs';
-  import { dateFormat } from "../utils/format";
-  import { dorequest, getPlateSecurity, fetchHistoryKline } from '../utils/ftservice';
+  import { dorequest, getPlateSecurity } from '../utils/ftservice';
+  import { aliyunGet } from '../service/http'
   export default {
     name: 'PlateStockListDialog',
     props: [
@@ -93,18 +93,22 @@
 
       getStockListInfo: async function(security) {
         this.fullscreenLoading = true;
-        const klineEndDate = dateFormat(dayjs())
-        const klineStartDate = dateFormat(dayjs().subtract(5, 'month'))
+        const klineEndDate = dayjs().format('YYYYMMDD')
+        const klineStartDate = dayjs().subtract(5, 'month').format('YYYYMMDD')
         this.websocket = dorequest(this.$store, async (msg) => {
           console.log(msg)
           let plateStockList = await getPlateSecurity(this.websocket, security)
           plateStockList = plateStockList.slice(0, plateStockList.length >= 50 ? 50 : plateStockList.length)
           this.tableData = plateStockList.map(async (item) => {
-            let klineRes = await fetchHistoryKline(this.websocket, item.basic.security, klineStartDate, klineEndDate)
+            let klineRes = await aliyunGet('/hq/kline', {
+                "code": (item.basic.security.market == 21? 1 : 0)+ "." + item.basic.security.code,
+                'startdate': klineStartDate,
+                'enddate': klineEndDate
+            })
             if (!klineRes) {
               console.log(`the security code is ${security}`)
             }
-            klineRes = klineRes.reverse();
+            klineRes = klineRes.data.rows.reverse();
             const kline5Growth  = this.getGrowth(klineRes, 5)
             const kline15Growth = this.getGrowth(klineRes, 15)
             const kline30Growth = this.getGrowth(klineRes, 30);

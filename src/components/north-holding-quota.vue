@@ -45,8 +45,7 @@ import { onUnmounted, onMounted } from 'vue';
 import dayjs from "dayjs";
 import { aliyunGet } from "../service/http";
 import { dateFormat } from "../utils/format";
-import { dorequest } from '../utils/ftservice';
-import { setupKlineCharts } from '../utils/kline'
+import { setupKlineCharts2 } from '../utils/kline'
 
 export default {
   name: 'NorthHoldingQuota',
@@ -60,14 +59,6 @@ export default {
       market: 21,
       code: "601108",
       options: [
-        {
-          value: 1, //Qot_Common.QotMarket_HK_Security
-          label: "HK",
-        },
-        {
-          value: 11, //Qot_Common.QotMarket_US_Security
-          label: "US",
-        },
         {
           value: 21, //Qot_Common.QotMarket_CNSH_Security
           label: "SH",
@@ -93,63 +84,53 @@ export default {
   methods: {
     getData: async function() {
       this.resultShowValue = 'loading......'
-      this.websocket = dorequest(this.$store, async (msg) => {
-        console.log(`this.market: ${this.market}`)
-        console.log(`this.code: ${this.code}`)
-        console.log(`the msg: ${msg}`)
-        console.log(`${this.d}`)
+      const northholding = await aliyunGet(`/northholding/${this.code}`, {
+        startDate: dateFormat(this.date[0]),
+        endDate: dateFormat(this.date[1]),
+      })
+      const klineMap = new Map();
+      const holdingMap = new Map();
+      // const finalHoldingMap = new Map();
 
-        const northholding = await aliyunGet(`/northholding/${this.code}`, {
-          startDate: dateFormat(this.date[0]),
-          endDate: dateFormat(this.date[1]),
-        })
-        const klineMap = new Map();
-        const holdingMap = new Map();
-        // const finalHoldingMap = new Map();
+      // this.setupKline(securityLineRaw, this.stKLineChart)
+      northholding.data.rows.map((data) => {
+        holdingMap.set(dayjs(data.trade_date).format('YYYYMMDD'), data.holding_amt);
+      })
 
-        // this.setupKline(securityLineRaw, this.stKLineChart)
-        northholding.data.rows.map((data) => {
-          holdingMap.set(dayjs(data.trade_date).format('YYYYMMDD'), data.holding_amt);
-        })
+      const holdingData = Array.from(holdingMap.values());
 
-        const holdingData = Array.from(holdingMap.values());
+      const klineData = Array.from(klineMap.values());
 
-        const klineData = Array.from(klineMap.values());
+      console.log(`the legth of holdingData is ${holdingData.length}`)
+      console.log(`the legth of klineData is ${klineData.length}`)
 
-        console.log(`the legth of holdingData is ${holdingData.length}`)
-        console.log(`the legth of klineData is ${klineData.length}`)
+      this.northHoldingChart.setOption({  //动画的配置
+        series: [
+        {
+          smooth: true,
+          type: 'line',
+          data: holdingData
+        }],
+        tooltip: {
+          trigger: "axis"
+        },
+        yAxis: {
+          type: "value"
+        },
+        xAxis: [{
+          data: northholding.data.rows.map((data) => {
+            return dayjs(data.trade_date).format('YYYYMMDD')
+          })
+        }]
+      })
 
-        this.northHoldingChart.setOption({  //动画的配置
-          series: [
-          {
-            smooth: true,
-            type: 'line',
-            data: holdingData
-          }],
-          tooltip: {
-            trigger: "axis"
-          },
-          yAxis: {
-            type: "value"
-          },
-          xAxis: [{
-            data: northholding.data.rows.map((data) => {
-              return dayjs(data.trade_date).format('YYYYMMDD')
-            })
-          }]
-        })
-
-        this.resultShowValue = await setupKlineCharts(this.websocket, "", this.klineChart, {"code": this.code, "market": this.market}, this.date[0], this.date[1]);
-        console.log(this.resultShowValue);
-        window.onresize = function() {
-          //自适应大小
-          this.northHoldingChart.resize();
-          this.klineChart.resize();
-        };
-      }, 
-      (msg) => {
-        this.errMsg = msg
-      });
+      this.resultShowValue = await setupKlineCharts2("", this.klineChart, {"code": this.code, "market": this.market}, this.date[0], this.date[1]);
+      console.log(this.resultShowValue);
+      window.onresize = function() {
+        //自适应大小
+        this.northHoldingChart.resize();
+        this.klineChart.resize();
+      };
     },
   },
 

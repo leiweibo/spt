@@ -84,7 +84,7 @@ import { numberFormat } from "../utils/format";
 import * as echarts from "echarts";
 import { dorequest, getOwnerPlate } from '../utils/ftservice';
 import dayjs from "dayjs";
-import { setupKlineCharts } from '../utils/kline'
+import { setupKlineCharts, setupKlineCharts2 } from '../utils/kline'
 import PlateStockListDialog from './plate-stocklist-dialog'
 
 export default {
@@ -176,7 +176,7 @@ export default {
         const startDate = startDateYears.set('month', 0).set('date', 1).format('YYYY-MM-DD')
         const endDate = currentDate.format('YYYY-MM-DD')
         
-        setupKlineCharts(this.websocket, "过去5年K线", this.klineChart, {"code": this.code, "market": this.market}, startDate, endDate)
+        setupKlineCharts2("过去5年K线", this.klineChart, {"code": this.code, "market": this.market}, startDate, endDate)
         
         const ownerPlates = await getOwnerPlate(this.websocket, {"code": this.code, "market": this.market})
         console.log(`the plates ----> ${ownerPlates}`);
