@@ -1,7 +1,7 @@
 import { calculateMA, fetchHistoryKline } from './ftservice';
 import dayjs from "dayjs";
 
-const setupKlineCharts = async function(websocket, title, klineChart, security, startDate, endDate) {
+const setupKlineCharts = async function(websocket, title, klineChart, security, startDate, endDate, titleClickFunc) {
   const securityLineRaw = await fetchHistoryKline(websocket, security, startDate, endDate)
   const klineArray = []
   const klineDates = []
@@ -13,7 +13,8 @@ const setupKlineCharts = async function(websocket, title, klineChart, security, 
   title: {
     text: title,
     left: 'left',
-    align: 'right'
+    align: 'right',
+    triggerEvent: titleClickFunc != null? true : false,
   },
   legend: {
       data: ['日K', 'MA5', 'MA10', 'MA20', 'MA30'],
@@ -116,6 +117,13 @@ const setupKlineCharts = async function(websocket, title, klineChart, security, 
       }
     ]
   })
+  if (titleClickFunc) {
+    klineChart.on('click', params => {
+        if (params.componentType === 'title') {
+            titleClickFunc(security)
+        }
+    })
+  }
   return security.code;
 }
 

@@ -1,5 +1,6 @@
 <template>
   <div id="main">
+    <PlateStockListDialog  v-if="renderComponent" :show="dialogShow" :title="dialogTitle" :security="security"/>
     <div id="input">
       <div id="stock">
         股票
@@ -84,9 +85,11 @@ import * as echarts from "echarts";
 import { dorequest, getOwnerPlate } from '../utils/ftservice';
 import dayjs from "dayjs";
 import { setupKlineCharts } from '../utils/kline'
+import PlateStockListDialog from './plate-stocklist-dialog'
 
 export default {
   name: "getSecurityInfo",
+  components: {PlateStockListDialog},
   data() {
     return {
       errMsg: "",
@@ -121,7 +124,10 @@ export default {
       reportDate: '数据日期',
       shortLoan: '--',
       longLoan: '--',
-      boundPayable: '---'
+      boundPayable: '---',
+      dialogShow: false,
+      renderComponent: false,
+      dialogTitle: '',
     };
   },
   created() {},
@@ -175,7 +181,16 @@ export default {
         const ownerPlates = await getOwnerPlate(this.websocket, {"code": this.code, "market": this.market})
         console.log(`the plates ----> ${ownerPlates}`);
         const plate = ownerPlates.s2c.ownerPlateList[0].plateInfoList[0].plate;
-        setupKlineCharts(this.websocket, `${ownerPlates.s2c.ownerPlateList[0].plateInfoList[0].name} 版块走势`, this.plateKlineChart, plate, startDate, endDate)
+        setupKlineCharts(this.websocket, `${ownerPlates.s2c.ownerPlateList[0].plateInfoList[0].name} 板块走势`, this.plateKlineChart, plate, startDate, endDate, (security) => {
+          console.log(security);
+          this.renderComponent = false;
+          this.dialogShow = true;
+          this.dialogTitle = `${ownerPlates.s2c.ownerPlateList[0].plateInfoList[0].name}板块股票情况(按照涨跌幅排序，最多显示50条)`
+          this.security = security
+          this.$nextTick(() => {
+            this.renderComponent = true
+          })
+        })
       }, 
       (msg) => {
         this.errMsg = msg

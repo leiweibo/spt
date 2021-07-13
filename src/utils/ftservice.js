@@ -55,7 +55,7 @@ const fetchHistoryKline = function(websocket, security, beginDate, endDate) {
         return {
           ...item,
           volume: item.volume.low ? item.volume.low : item.volume,
-          changeRate: `${item.changeRate.toFixed(2)} %`,
+          changeRate: `${item.changeRate.toFixed(2)}%`,
         };
       });
     })
@@ -80,4 +80,20 @@ const calculateMA = function(dayCount, data) {
     return result;
 }
 
-export {dorequest, calculateMA, fetchHistoryKline, getOwnerPlate};
+const getPlateSecurity = function(websocket, security) {
+  return websocket.GetPlateSecurity({
+    c2s: {
+      plate: security,
+      sortField: 4,
+      ascend: false,
+    }
+  })
+  .then((res) => {
+    return res.s2c.staticInfoList
+  })
+  .catch((err) => {
+    console.log("err:", err);
+  });
+}
+
+export {dorequest, calculateMA, fetchHistoryKline, getOwnerPlate, getPlateSecurity};
