@@ -124,7 +124,8 @@ export default {
         }]
       })
 
-      this.resultShowValue = await setupKlineCharts2("", this.klineChart, {"code": this.code, "market": this.market}, this.date[0], this.date[1]);
+      const klineResp = await setupKlineCharts2("", this.klineChart, {"code": this.code, "market": this.market}, this.date[0], this.date[1]);
+      this.resultShowValue = klineResp.code
       console.log(this.resultShowValue);
       window.onresize = function() {
         //自适应大小

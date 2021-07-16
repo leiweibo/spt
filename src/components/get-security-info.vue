@@ -45,12 +45,12 @@
         </el-row>
         <el-row>
           <el-col>
-            <div id="kline-chars-box" style="width: 100%; height: 340px; margin-top: 30px;" />
+            <div id="kline-chars-box" style="width: 100%; height: 540px; margin-top: 30px;" />
           </el-col>
         </el-row>
         <el-row>
            <el-col>
-            <div id="plate-kline-chars-box" style="width: 100%; height: 340px; margin-top: 30px;" />
+            <div id="plate-kline-chars-box" style="width: 100%; height: 540px; margin-top: 30px;" />
           </el-col>
         </el-row>
         <el-row>
@@ -69,8 +69,16 @@
 
           <el-col class="line" :span="2"></el-col>
           <el-col :span="11">
+            <div id="divided-chart" style="width: 100%; height: 340px; margin-top: 30px"/>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="11">
             <div id="netgrossprofit-chart" style="width: 100%; height: 340px; margin-top: 30px"/>
           </el-col>
+
+          <el-col class="line" :span="2"></el-col>
+          
         </el-row>
       </div>
     </div>
@@ -84,7 +92,7 @@ import { numberFormat } from "../utils/format";
 import * as echarts from "echarts";
 import { dorequest, getOwnerPlate } from '../utils/ftservice';
 import dayjs from "dayjs";
-import { setupKlineCharts, setupKlineCharts2 } from '../utils/kline'
+import { setupKlineCharts, setupKlineCharts3 } from '../utils/kline'
 import PlateStockListDialog from './plate-stocklist-dialog'
 
 export default {
@@ -138,6 +146,7 @@ export default {
     this.netGrossProfitChart = echarts.init(document.getElementById("netgrossprofit-chart"))
     this.klineChart = echarts.init(document.getElementById("kline-chars-box"))
     this.plateKlineChart = echarts.init(document.getElementById("plate-kline-chars-box"))
+    this.dividedChart = echarts.init(document.getElementById("divided-chart"))
   },
   unmounted() {},
   methods: {
@@ -159,16 +168,7 @@ export default {
       this.boundPayable = numberFormat(stkInfoData.finalComposedData[0].boundPayable);
 
       this.websocket = dorequest(this.$store, async (msg) => {
-        console.log(`this.market: ${this.market}`)
-        console.log(`this.code: ${this.code}`)
         console.log(`the msg: ${msg}`)
-        console.log(`${this.d}`)
-
-        const klineMap = new Map();
-
-        const klineData = Array.from(klineMap.values());
-
-        console.log(`the legth of klineData is ${klineData.length}`)
 
         const currentDate = dayjs();
         const startDateYears = currentDate.subtract(5, "year");
@@ -176,13 +176,36 @@ export default {
         const startDate = startDateYears.set('month', 0).set('date', 1).format('YYYY-MM-DD')
         const endDate = currentDate.format('YYYY-MM-DD')
         
-        setupKlineCharts2("过去5年K线", this.klineChart, {"code": this.code, "market": this.market}, startDate, endDate)
-        
+        const bonusData = await setupKlineCharts3("过去5年K线", this.klineChart, {"code": this.code, "market": this.market}, startDate, endDate)
+        console.log(`the data1 is------> ${bonusData.bonusRatioData}`)
+        console.log(`the data2 is------> ${bonusData.dates}`)
+        this.dividedChart.setOption({
+          title: {
+            text: '股息分红(每10股)',
+            left: 'center',
+            align: 'right'
+          },
+          series: [
+          {
+            smooth: true,
+            type: 'line',
+            barWidth: '20%',
+            data: bonusData.bonusRatioData,
+          }],
+          tooltip: {
+            trigger: "axis"
+          },
+          yAxis: {
+            type: "value"
+          },
+          xAxis: [{
+            data: bonusData.dates,
+          }]
+        })
+
         const ownerPlates = await getOwnerPlate(this.websocket, {"code": this.code, "market": this.market})
-        console.log(`the plates ----> ${ownerPlates}`);
         const plate = ownerPlates.s2c.ownerPlateList[0].plateInfoList[0].plate;
         setupKlineCharts(this.websocket, `${ownerPlates.s2c.ownerPlateList[0].plateInfoList[0].name} 板块走势`, this.plateKlineChart, plate, startDate, endDate, (security) => {
-          console.log(security);
           this.renderComponent = false;
           this.dialogShow = true;
           this.dialogTitle = `${ownerPlates.s2c.ownerPlateList[0].plateInfoList[0].name}板块股票情况(按照涨跌幅排序，最多显示50条)`
@@ -237,7 +260,6 @@ export default {
               smooth: true,
               type: 'bar',
               barWidth: '20%',
-              yAxisIndex: 0,
               data: stkInfoData.keyIndexData.map((d) => d.netProfit.toFixed(2)).reverse()
             },
             {
@@ -319,6 +341,7 @@ export default {
             }).reverse()
           }]
         })
+        
         window.onresize = function() {
           this.plateKlineChart.resize();
           this.klineChart.resize();
@@ -326,6 +349,7 @@ export default {
           this.netProfitChart.resize();
           this.operationCashChart.resize();
           this.stockPriceChart.resize();
+          this.dividedChart.resize();
         };
     },
 
