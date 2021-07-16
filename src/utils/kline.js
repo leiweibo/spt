@@ -316,28 +316,25 @@ const setupKlineCharts3 = async function(title, klineChart, security, startDate,
     const bonusRatioData = rows.map((data) => {
       let targetBonus = null;
       
-      for (let i = 0; i < bonusData.length; i++) {
-        if (dayjs(data.time).diff(dayjs(bonusData[i].REPORT_DATE), 'seconds') > 0) {
-          targetBonus = bonusData[i]
+      for (let i = 0; i < bonusData.dates.length; i++) {
+        if (dayjs(data.time).diff(dayjs(`${bonusData.dates[i]} 12-31`), 'seconds') > 0) {
+          targetBonus = bonusData.bonus[i]
           break
         }
       }
       return {
-        bonusRmb: targetBonus.PRETAX_BONUS_RMB,
+        bonusRmb: targetBonus,
         closePrice: data.closePrice,
-        bonusRatio: (Number(targetBonus.PRETAX_BONUS_RMB)/10/data.closePrice).toFixed(5),// 股息率=每股分红/除以每股股价
+        bonusRatio: (Number(targetBonus/10)/data.closePrice).toFixed(5),// 股息率=每股分红/除以每股股价
         time: data.time,
       }
     })
 
     setup3(security, securityLineRaw.data.rows, bonusRatioData, title, klineChart, titleClickFunc)
 
-    const bonusDateArray = []
-    const bonusRmbArray = []
-    bonusData.map((bonus) => {
-        bonusDateArray.push(bonus.REPORT_DATE),
-        bonusRmbArray.push(bonus.PRETAX_BONUS_RMB)
-    })
+    const bonusDateArray = bonusData.dates
+    const bonusRmbArray = bonusData.bonus
+    
     return {
         code: security.code,
         dates: bonusDateArray.reverse(),

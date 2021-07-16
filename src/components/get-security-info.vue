@@ -14,7 +14,10 @@
         </el-select>
       </div>
       <el-input id="code" v-model="code" placeholder="股票代码"></el-input>
-      <el-button type="primary" style="margin-left: 30px;" v-on:click="getKeyIndex()">获取股票关键指标</el-button>
+      <el-button type="primary" 
+        style="margin-left: 30px;"
+        v-loading.fullscreen.lock="fullscreenLoading"
+        v-on:click="getKeyIndex()">获取股票关键指标</el-button>
     </div>
     <span id="err">{{ errMsg }}</span>
     <div id="output">
@@ -136,6 +139,7 @@ export default {
       dialogShow: false,
       renderComponent: false,
       dialogTitle: '',
+      fullscreenLoading: false,
     };
   },
   created() {},
@@ -151,10 +155,12 @@ export default {
   unmounted() {},
   methods: {
     getKeyIndex: async function() {
+      this.fullscreenLoading = true;
       const securityCode = `${this.$refs.mkt.selectedLabel}${this.code}`
       const stkInfoResp = await aliyunGet(`/stockinfo/important`, {
         code: securityCode
       });
+      this.fullscreenLoading = false;
       const stkInfoData = stkInfoResp.data
       this.totalMktValue = numberFormat(stkInfoData.totalMktValue)
       this.debtRatio = (stkInfoData.finalComposedData[0].debtRatio * 100).toFixed(2) + " %"
@@ -343,13 +349,13 @@ export default {
         })
         
         window.onresize = function() {
-          this.plateKlineChart.resize();
-          this.klineChart.resize();
-          this.roeChart.resize();
-          this.netProfitChart.resize();
-          this.operationCashChart.resize();
-          this.stockPriceChart.resize();
-          this.dividedChart.resize();
+          this.plateKlineChart?.resize();
+          this.klineChart?.resize();
+          this.roeChart?.resize();
+          this.netProfitChart?.resize();
+          this.operationCashChart?.resize();
+          this.stockPriceChart?.resize();
+          this.dividedChart?.resize();
         };
     },
 
