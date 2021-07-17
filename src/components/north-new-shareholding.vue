@@ -6,7 +6,7 @@
         type="month">
       </el-date-picker>
 
-      <el-button id="submitBtn" type="primary" v-on:click="getData()">获取该月建仓数据</el-button>
+      <el-button id="submitBtn" type="primary" v-on:click="getData()">获取该月建仓/清仓数据</el-button>
     </div>
     <div id="err">{{ errMsg }}</div>
     <el-space wrap>
@@ -43,7 +43,7 @@
           :total="totalCount" />
       </div>
       <div>
-        <NorthHoldingQuota v-if="renderComponent" :showInput = "false" :passedData="passedData"/>
+        <NorthHoldingQuota v-if="renderComponent" :showInput = "false" :type="1" :passedData="passedData"/>
       </div>
     </el-space>
   </div>

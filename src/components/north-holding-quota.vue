@@ -51,13 +51,15 @@ export default {
   name: 'NorthHoldingQuota',
   props: [
     'passedData',
-    'showInput'
+    'showInput',
+    'type',
   ],
   data() {
     return {
       errMsg: "",
       market: 21,
       code: "601108",
+      ccasscode: '',
       options: [
         {
           value: 21, //Qot_Common.QotMarket_CNSH_Security
@@ -78,15 +80,18 @@ export default {
       chartTitleStock: '',
       klineDates: [],
       klineArray: [],
-      resultShowValue: 'loading.....'
+      resultShowValue: 'loading...'
     };
   },
   methods: {
     getData: async function() {
-      this.resultShowValue = 'loading......'
-      const northholding = await aliyunGet(`/northholding/${this.code}`, {
+      this.resultShowValue = 'loading...'
+      // type不传或者0的时候，则用code去查询北上持仓
+      const finalCode = (!this.type || this.type === '0') ? this.code : this.ccasscode;
+      const northholding = await aliyunGet(`/northholding/${finalCode}`, {
         startDate: dateFormat(this.date[0]),
         endDate: dateFormat(this.date[1]),
+        type: this.type,
       })
       const klineMap = new Map();
       const holdingMap = new Map();
@@ -98,7 +103,6 @@ export default {
       })
 
       const holdingData = Array.from(holdingMap.values());
-
       const klineData = Array.from(klineMap.values());
 
       console.log(`the legth of holdingData is ${holdingData.length}`)
@@ -124,13 +128,25 @@ export default {
         }]
       })
 
-      const klineResp = await setupKlineCharts2("", this.klineChart, {"code": this.code, "market": this.market}, this.date[0], this.date[1]);
-      this.resultShowValue = klineResp.code
+      // type === '1' 如果code有传，则拿code去获取k线，直接通过ccasscode去查询北上持仓情况。
+      // type === '0' 或者 不传type的情况下，则直接通过code去查询北上行情情况
+      if ((!this.type || this.type === '0') ) {
+        const klineResp = await setupKlineCharts2("", this.klineChart, {"code": this.code, "market": this.market}, this.date[0], this.date[1]);
+        this.resultShowValue = klineResp.code
+      } else {
+        if (this.code) {
+          const klineResp = await setupKlineCharts2("", this.klineChart, {"code": this.code, "market": this.market}, this.date[0], this.date[1]);
+          this.resultShowValue = klineResp.code
+        } else {
+          this.resultShowValue = this.ccasscode
+        }
+      }
+      
       console.log(this.resultShowValue);
       window.onresize = function() {
         //自适应大小
-        this.northHoldingChart.resize();
-        this.klineChart.resize();
+        this.northHoldingChart?.resize();
+        this.klineChart?.resize();
       };
     },
   },
@@ -166,7 +182,7 @@ export default {
       // }
       return props.passedData;
     }
-    return { pd: initChart(), si: props.showInput };
+    return { pd: initChart(), si: props.showInput,  showType: props.type ? props.type : 0};
   },
 
   created() {
@@ -174,6 +190,7 @@ export default {
     if (this.pd) {
       console.log(`-------------> ${this.pd.code}`);
       this.code = this.pd.code;
+      this.ccasscode = this.pd.ccasscode;
       this.market = this.pd.market;
       this.date[0] = dateFormat(this.pd.date0);
       this.date[1] = dateFormat(this.pd.date1);
