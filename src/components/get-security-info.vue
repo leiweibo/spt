@@ -173,41 +173,43 @@ export default {
       this.longLoan = numberFormat(stkInfoData.finalComposedData[0].longLoan);
       this.boundPayable = numberFormat(stkInfoData.finalComposedData[0].boundPayable);
 
+      const currentDate = dayjs();
+      const startDateYears = currentDate.subtract(5, "year");
+      
+      const startDate = startDateYears.set('month', 0).set('date', 1).format('YYYY-MM-DD')
+      const endDate = currentDate.format('YYYY-MM-DD')
+      
+      const bonusData = await setupKlineCharts3("过去5年K线", this.klineChart, {"code": this.code, "market": this.market}, startDate, endDate)
+      console.log(`the data1 is------> ${bonusData.bonusRatioData}`)
+      console.log(`the data2 is------> ${bonusData.dates}`)
+      this.dividedChart.setOption({
+        title: {
+          text: '股息分红(每10股)',
+          left: 'center',
+          align: 'right'
+        },
+        series: [
+        {
+          smooth: true,
+          type: 'line',
+          barWidth: '20%',
+          data: bonusData.bonusRatioData,
+        }],
+        tooltip: {
+          trigger: "axis"
+        },
+        yAxis: {
+          type: "value"
+        },
+        xAxis: [{
+          data: bonusData.dates,
+        }]
+      })
+
       this.websocket = dorequest(this.$store, async (msg) => {
         console.log(`the msg: ${msg}`)
 
-        const currentDate = dayjs();
-        const startDateYears = currentDate.subtract(5, "year");
         
-        const startDate = startDateYears.set('month', 0).set('date', 1).format('YYYY-MM-DD')
-        const endDate = currentDate.format('YYYY-MM-DD')
-        
-        const bonusData = await setupKlineCharts3("过去5年K线", this.klineChart, {"code": this.code, "market": this.market}, startDate, endDate)
-        console.log(`the data1 is------> ${bonusData.bonusRatioData}`)
-        console.log(`the data2 is------> ${bonusData.dates}`)
-        this.dividedChart.setOption({
-          title: {
-            text: '股息分红(每10股)',
-            left: 'center',
-            align: 'right'
-          },
-          series: [
-          {
-            smooth: true,
-            type: 'line',
-            barWidth: '20%',
-            data: bonusData.bonusRatioData,
-          }],
-          tooltip: {
-            trigger: "axis"
-          },
-          yAxis: {
-            type: "value"
-          },
-          xAxis: [{
-            data: bonusData.dates,
-          }]
-        })
 
         const ownerPlates = await getOwnerPlate(this.websocket, {"code": this.code, "market": this.market})
         const plate = ownerPlates.s2c.ownerPlateList[0].plateInfoList[0].plate;

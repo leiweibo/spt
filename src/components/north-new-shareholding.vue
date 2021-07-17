@@ -20,6 +20,10 @@
           style="width: 620px;"
           @row-click="onRowClicked">
           <el-table-column
+            prop="securityCCassCode"
+            label="CCASS Code"
+            width="200" />
+          <el-table-column
             prop="securityCode"
             label="Security Code"
             width="180">
@@ -85,8 +89,8 @@ export default {
       });
 
       this.totalCount = getDiffDataResult.count;
-
-      this.tableData = getDiffDataResult.result.map((item) => {
+      const dataResult = getDiffDataResult.decreaseResult.concat(getDiffDataResult.increaseResult)
+      this.tableData = dataResult.map((item) => {
         return {
           ...item, 
           securityMktShowValue: item.securityMkt === '22' ? '深市' : '沪市'
@@ -101,6 +105,7 @@ export default {
       console.log(`the dateeeeeee is :${this.date}, ${d0}, ${d1}`)
       this.renderComponent = false;
       this.passedData = {
+        ccasscode: row.securityCCassCode,
         code: row.securityCode,
         market: row.securityMkt,
         date0: d0,
@@ -111,10 +116,8 @@ export default {
       })
     },
     tableRowClassName({row}) {
-      if (row.securityMkt === '21') {
+      if (row.securityCode === '') {
         return 'warning-row';
-      } else if (row.securityMkt === '22') {
-        return 'success-row';
       }
       return '';
     },
