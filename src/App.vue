@@ -18,6 +18,7 @@
         <template #title>北向资金</template>
         <el-menu-item index="north-new-shareholding">新增持仓</el-menu-item>
         <el-menu-item index="north-finance">北向资金个股</el-menu-item>
+        <el-menu-item index="north-finance-expore">持仓发掘</el-menu-item>
       </el-submenu>
       
       <el-submenu index="2">

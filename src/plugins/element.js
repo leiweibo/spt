@@ -21,6 +21,8 @@ import {
   ElCol,
   ElRow,
   ElDialog,
+  ElForm,
+  ElFormItem
 } from 'element-plus'
 
 export default (app) => {
@@ -46,4 +48,6 @@ export default (app) => {
   app.use(ElCol)
   app.use(ElRow)
   app.use(ElDialog)
+  app.use(ElFormItem)
+  app.use(ElForm)
 }
