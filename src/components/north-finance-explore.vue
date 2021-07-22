@@ -31,6 +31,7 @@
               height="768"
               :empty-text="emptyText"
               :row-class-name="tableRowClassName"
+              :cell-style="cellStyle"
               @row-click="onRowClicked">
               <el-table-column
                 prop="securityCCassCode"
@@ -122,6 +123,7 @@ export default {
       ccode: '',
       emptyText: 'No Data',
       loading: 'Loading',
+      colorProperties: ['changeVal', 'changeRatio']
     };
   },
   methods: {
@@ -209,6 +211,25 @@ export default {
       }
       return '';
     },
+    cellStyle({row, column}){
+      if (this.colorProperties.includes(column.property )) {
+        if (row[column.property].toString().indexOf('-') >= 0) {
+          return 'color:green';
+        } else if (row[column.property].toString().indexOf('-') < 0) {
+          return 'color:red';
+        }
+      }
+      
+      return '';
+      // if (columnIndex >= 2) {
+      //   
+      //   if (row[column.property].indexOf('-') >= 0) {
+      //     return 'color:green'
+      //   } else {
+      //     return 'color:red'
+      //   }
+      // } 
+    }
   },
 
 
