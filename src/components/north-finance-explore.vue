@@ -60,11 +60,14 @@
 
               <el-table-column
                 prop="changeVal"
+                sortable
                 label='持仓变化'>
               </el-table-column>
 
               <el-table-column
                 prop="changeRatio"
+                sortable
+                :formatter="formatter"
                 label='持仓变化率'>
               </el-table-column>
             </el-table>
@@ -153,7 +156,7 @@ export default {
           holdingAmt: item.holding_amt,
           preHoldingAmt: item.targetDays.prev_holding_amt,
           changeVal: item.targetDays.offsetVal,
-          changeRatio: `${(item.targetDays.changeRatio * 100).toFixed(0)}%`,
+          changeRatio: item.targetDays.changeRatio,
         }
       }));
       this.emptyText = this.tableData.length == 0 ? 'No Data.' : 'Loading...';
@@ -210,6 +213,9 @@ export default {
         return 'warning-row';
       }
       return '';
+    },
+    formatter(row) {
+      return `${(row.changeRatio * 100).toFixed(0)}%`
     },
     cellStyle({row, column}){
       if (this.colorProperties.includes(column.property )) {
