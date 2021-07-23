@@ -45,12 +45,19 @@
                 label="Security Name">
               </el-table-column>
               <el-table-column
-                prop="securityMktShowValue"
+                prop="securityMkt"
+                :formatter="securityMktFormatter"
                 label="Market">
               </el-table-column>
               <el-table-column
                 prop="holdingAmt"
                 label="最新持仓">
+              </el-table-column>
+
+              <el-table-column
+                prop="preTradeDate"
+                label='N天日期'
+                :formatter="dateFormatter">
               </el-table-column>
 
               <el-table-column
@@ -121,7 +128,7 @@ export default {
       totalCount: 0,
       passedData: null,
       renderComponent: true,
-      pageSize: 20,
+      pageSize: 40,
       currentPage: 1,
       ccode: '',
       emptyText: 'No Data',
@@ -150,9 +157,9 @@ export default {
       this.tableData = this.tableData.concat(dataResult.map((item) => {
         return {
           securityCCassCode: item.security_ccass_code,
-          securityCode: '',
+          securityCode: item.security_code,
           securityName: item.security_name,
-          securityMktShowValue: item.security_mkt === '22' ? '深市' : '沪市',
+          securityMkt: item.security_mkt,
           holdingAmt: item.holding_amt,
           preHoldingAmt: item.targetDays.prev_holding_amt,
           changeVal: item.targetDays.offsetVal,
@@ -192,10 +199,9 @@ export default {
       this.currentPage = value;
     },
     onRowClicked(row) {
-      console.log(`the dateeeeeee is :${this.date}`)
-      const d0 = dayjs(this.date).set('date', 1).format('YYYY-MM-DD')
+      // 北向资金数据从12-01开始，所以这个地方传的日期为固定
+      const d0 = dayjs('2020-12-01')
       const d1 = dayjs().format('YYYY-MM-DD')
-      console.log(`the dateeeeeee is :${this.date}, ${d0}, ${d1}`)
       this.renderComponent = false;
       this.passedData = {
         ccasscode: row.securityCCassCode,
@@ -217,6 +223,12 @@ export default {
     formatter(row) {
       return `${(row.changeRatio * 100).toFixed(0)}%`
     },
+    dateFormatter(row) {
+      return dayjs(row['preTradeDate']).format('YYYY-MM-DD');
+    },
+    securityMktFormatter(row) {
+       return row['securityMkt'] === '22' ? '深市' : '沪市'
+    },
     cellStyle({row, column}){
       if (this.colorProperties.includes(column.property )) {
         if (row[column.property].toString().indexOf('-') >= 0) {
@@ -227,14 +239,6 @@ export default {
       }
       
       return '';
-      // if (columnIndex >= 2) {
-      //   
-      //   if (row[column.property].indexOf('-') >= 0) {
-      //     return 'color:green'
-      //   } else {
-      //     return 'color:red'
-      //   }
-      // } 
     }
   },
 

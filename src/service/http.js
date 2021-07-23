@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 let baseURL = "http://push2.eastmoney.com/api"
-// let aliyunBaseURL = "http://47.95.230.67:3000/api/"
-let aliyunBaseURL = "http://localhost:3000/api/"
+let aliyunBaseURL = "http://47.95.230.67:3000/api/"
+// let aliyunBaseURL = "http://localhost:3000/api/"
 
 const eastmoneyAxios = axios.create({
   baseURL,
