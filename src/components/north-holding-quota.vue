@@ -1,6 +1,6 @@
 <template>
   <div id="main">
-    <div id="input" v-show="!pd && si">
+    <div id="input" v-show="showInputFields">
       <div id="stock">
         股票
         <el-select id="market" v-model="market">
@@ -25,10 +25,10 @@
       <el-button id="submitBtn" type="primary" v-on:click="getData()">获取数据</el-button>
       <div id="err">{{ errMsg }}</div>
     </div>
-    <div v-show="pd">
+    <div>
       <span class="demonstration">{{resultShowValue}}</span>
     </div>
-    <div id="output">
+    <div id="output" v-show="showCharts">
         <div id="content" wrap>
           <div id="chars-box" style="width: 100%; height: 340px;">
           </div>
@@ -80,12 +80,14 @@ export default {
       chartTitleStock: '',
       klineDates: [],
       klineArray: [],
-      resultShowValue: 'loading...'
+      showInputFields: false,
+      showCharts: true,
+      resultShowValue: ''
     };
   },
   methods: {
     getData: async function() {
-      this.resultShowValue = 'loading...'
+      this.resultShowValue = 'loading'
       // type不传或者0的时候，则用code去查询北上持仓
       const finalCode = (!this.type || this.type === '0') ? this.code : this.ccasscode;
       const northholding = await aliyunGet(`/northholding/${finalCode}`, {
@@ -185,8 +187,35 @@ export default {
     return { pd: initChart(), si: props.showInput,  showType: props.type ? props.type : 0};
   },
 
+  watch: {
+    passedData(newVal, oldVal) {
+      console.log(`oldVal:${oldVal}`)
+      console.log(`newVal:${newVal}`)
+      console.log(`pd:${this.pd}`)
+      if (newVal && newVal.code) {
+        this.code = newVal.code;
+        this.ccasscode = newVal.ccasscode;
+        this.market = newVal.market;
+        this.date[0] = dateFormat(newVal.date0);
+        this.date[1] = dateFormat(newVal.date1);
+        this.getData();
+        this.showCharts = true;
+      } else {
+        this.showCharts = false;
+        this.resultShowValue = ''
+      }
+    },
+    showInput(newVal, oldVal) {
+      console.log(oldVal)
+      this.showInputFields = newVal || false;
+    },
+    showType(newVal, oldVal) {
+      console.log(oldVal)
+      this.showType = newVal || 0
+    }
+  },
+
   created() {
-    
     if (this.pd) {
       console.log(`-------------> ${this.pd.code}`);
       this.code = this.pd.code;

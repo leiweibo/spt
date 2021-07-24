@@ -43,7 +43,7 @@
           :total="totalCount" />
       </div>
       <div>
-        <NorthHoldingQuota v-if="renderComponent" :showInput = "false" :type="1" :passedData="passedData"/>
+        <NorthHoldingQuota :showInput = "false" :type="1" :passedData="passedData"/>
       </div>
     </el-space>
   </div>
@@ -79,7 +79,7 @@ export default {
     getData: async function() {
       this.fullscreenLoading = true;
       this.renderComponent = false;
-      this.passedData = null;
+      this.passedData = {};
       this.$nextTick(() => {
         this.renderComponent = true
       })
