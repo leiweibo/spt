@@ -9,43 +9,48 @@
       <el-button id="submitBtn" type="primary" v-on:click="getData()">获取该月建仓/清仓数据</el-button>
     </div>
     <div id="err">{{ errMsg }}</div>
-    <el-space wrap>
-      <div id="output">
-        <el-table
-          :data="tableData"
-          v-loading.fullscreen.lock="fullscreenLoading"
-          border
-          height="768"
-          :row-class-name="tableRowClassName"
-          style="width: 620px;"
-          @row-click="onRowClicked">
-          <el-table-column
-            prop="securityCCassCode"
-            label="CCASS Code"
-            width="200" />
-          <el-table-column
-            prop="securityCode"
-            label="Security Code"
-            width="180">
-          </el-table-column>
-          <el-table-column
-            prop="securityName"
-            label="Security Name"
-            width="180">
-          </el-table-column>
-          <el-table-column
-            prop="securityMktShowValue"
-            label="Market">
-          </el-table-column>
-        </el-table>
-        <el-pagination
-          layout="total"
-          :total="totalCount" />
-      </div>
-      <div>
-        <NorthHoldingQuota :showInput = "false" :type="1" :passedData="passedData"/>
-      </div>
-    </el-space>
+      <el-row>
+        <el-col :span="11">
+          <div id="output">
+            <el-table
+              :data="tableData"
+              v-loading.fullscreen.lock="fullscreenLoading"
+              border
+              height="768"
+              :row-class-name="tableRowClassName"
+              style="width: 100%;"
+              @row-click="onRowClicked">
+              <el-table-column
+                prop="securityCCassCode"
+                label="CCASS Code"
+                width="200" />
+              <el-table-column
+                prop="securityCode"
+                label="Security Code"
+                width="180">
+              </el-table-column>
+              <el-table-column
+                prop="securityName"
+                label="Security Name"
+                width="180">
+              </el-table-column>
+              <el-table-column
+                prop="securityMktShowValue"
+                label="Market">
+              </el-table-column>
+            </el-table>
+            <el-pagination
+              layout="total"
+              :total="totalCount" />
+          </div>
+        </el-col>
+        <el-col class="line" :span="2"></el-col>
+        <el-col :span="11">
+           <div>
+            <NorthHoldingQuota :showInput = "false" :type="1" :passedData="passedData"/>
+          </div>
+        </el-col>
+      </el-row>
   </div>
 </template>
 <script>
@@ -72,17 +77,12 @@ export default {
       fullscreenLoading: false,
       totalCount: 0,
       passedData: null,
-      renderComponent: true
     };
   },
   methods: {
     getData: async function() {
       this.fullscreenLoading = true;
-      this.renderComponent = false;
       this.passedData = {};
-      this.$nextTick(() => {
-        this.renderComponent = true
-      })
 
       const getDiffDataResult = await aliyunGet(`/northreport/monthly/diff`, {
         d: this.date
@@ -99,21 +99,15 @@ export default {
       this.fullscreenLoading = false;
     },
     onRowClicked(row) {
-      console.log(`the dateeeeeee is :${this.date}`)
       const d0 = dayjs(this.date).set('date', 1).format('YYYY-MM-DD')
       const d1 = dayjs().format('YYYY-MM-DD')
-      console.log(`the dateeeeeee is :${this.date}, ${d0}, ${d1}`)
-      this.renderComponent = false;
       this.passedData = {
         ccasscode: row.securityCCassCode,
         code: row.securityCode,
         market: row.securityMkt,
         date0: d0,
         date1: d1
-      },
-      this.$nextTick(() => {
-        this.renderComponent = true
-      })
+      }
     },
     tableRowClassName({row}) {
       if (row.securityCode === '') {

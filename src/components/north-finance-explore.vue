@@ -92,7 +92,7 @@
 
         <el-col :span="11">
           <div>
-            <NorthHoldingQuota v-if="renderComponent" :showInput = "false" :type="1" :passedData="passedData"/>
+            <NorthHoldingQuota :showInput = "false" :type="1" :passedData="passedData"/>
           </div>
         </el-col>
       </el-row>
@@ -127,7 +127,6 @@ export default {
       fullscreenLoading: false,
       totalCount: 0,
       passedData: null,
-      renderComponent: true,
       pageSize: 40,
       currentPage: 1,
       ccode: '',
@@ -146,6 +145,7 @@ export default {
         ccasscode: ccode,
         ps: this.pageSize,
       });
+      this.fullscreenLoading = false;
       if (page === 1) {
         this.tableData = [];
         this.currentPage = 1;
@@ -177,14 +177,9 @@ export default {
     },
     onSubmit: async function() {
       this.fullscreenLoading = true;
-      this.renderComponent = false;
-      this.passedData = null;
-      this.$nextTick(() => {
-        this.renderComponent = true
-      })
+      this.passedData = {};
       this.ccode = '';
       await this.setupData(this.ccode, 1);
-      this.fullscreenLoading = false;
     },
     clickNext(value) {
       console.log(`--1111---> ${value}, ${this.tableData.slice(-1)[0].securityCCassCode}`)
@@ -202,17 +197,13 @@ export default {
       // 北向资金数据从12-01开始，所以这个地方传的日期为固定
       const d0 = dayjs('2020-12-01')
       const d1 = dayjs().format('YYYY-MM-DD')
-      this.renderComponent = false;
       this.passedData = {
         ccasscode: row.securityCCassCode,
         code: row.securityCode,
         market: row.securityMkt,
         date0: d0,
         date1: d1
-      },
-      this.$nextTick(() => {
-        this.renderComponent = true
-      })
+      }
     },
     tableRowClassName({row}) {
       if (row.securityCode === '') {

@@ -9,6 +9,7 @@ export default {
   components: {NorthHoldingQuota},
   data() {
     return {
+      showInput: true, 
       passedData: {
         code: '601878',
         market: 21,

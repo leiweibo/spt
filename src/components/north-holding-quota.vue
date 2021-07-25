@@ -199,9 +199,9 @@ export default {
         this.date[0] = dateFormat(newVal.date0);
         this.date[1] = dateFormat(newVal.date1);
         this.getData();
-        this.showCharts = true;
+        // this.showCharts = true;
       } else {
-        this.showCharts = false;
+        // this.showCharts = false;
         this.resultShowValue = ''
       }
     },
@@ -225,6 +225,7 @@ export default {
       this.date[1] = dateFormat(this.pd.date1);
       this.getData();
     }
+    this.showInputFields = this.si;
   }
 }
 </script>
@@ -257,7 +258,7 @@ export default {
     font-size: 14px;
     text-align: left;
     margin-top: 20px;
-    width: 1080px;
+    width: 100%;
     
   }
   .k-line-chart-container {
