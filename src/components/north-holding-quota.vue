@@ -30,9 +30,9 @@
     </div>
     <div id="output" v-show="showCharts">
         <div id="content" wrap>
-          <div id="chars-box" style="width: 100%; height: 340px;">
+          <div :id="chart_box_id" style="width: 100%; height: 340px;">
           </div>
-          <div id="chart-type-stock-k-line" style="width: 100%; height: 340px; margin-top: 30px"/>
+          <div :id="chart_kline_id" style="width: 100%; height: 340px; margin-top: 30px"/>
         </div>
       </div>
   </div>
@@ -60,6 +60,8 @@ export default {
       market: 21,
       code: "601108",
       ccasscode: '',
+      chart_box_id: this.newDate(),
+      chart_kline_id: this.newDate()+1,
       options: [
         {
           value: 21, //Qot_Common.QotMarket_CNSH_Security
@@ -86,6 +88,9 @@ export default {
     };
   },
   methods: {
+    newDate: function() {
+      return dayjs().millisecond;
+    },
     getData: async function() {
       this.resultShowValue = 'loading'
       // type不传或者0的时候，则用code去查询北上持仓
@@ -155,8 +160,8 @@ export default {
 
   mounted: function () {
     // this.stKLineChart = init('chart-type-stock-k-line')
-    this.northHoldingChart = echarts.init(document.getElementById("chars-box"), "dark");
-    this.klineChart = echarts.init(document.getElementById("chart-type-stock-k-line"), "dark");
+    this.northHoldingChart = echarts.init(document.getElementById(this.chart_box_id), "dark");
+    this.klineChart = echarts.init(document.getElementById(this.chart_kline_id), "dark");
     
   },
 

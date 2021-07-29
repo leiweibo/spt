@@ -48,36 +48,36 @@
         </el-row>
         <el-row>
           <el-col>
-            <div id="kline-chars-box" style="width: 100%; height: 540px; margin-top: 30px;" />
+            <div :id="kline_chars_box" style="width: 100%; height: 540px; margin-top: 30px;" />
           </el-col>
         </el-row>
         <el-row>
            <el-col>
-            <div id="plate-kline-chars-box" style="width: 100%; height: 540px; margin-top: 30px;" />
+            <div :id="plate_kline_chars_box" style="width: 100%; height: 540px; margin-top: 30px;" />
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="11">
-            <div id="roe-chart" style="width: 100%; height: 340px; margin-top: 30px"/>
+            <div :id="roe_chart" style="width: 100%; height: 340px; margin-top: 30px"/>
           </el-col>
           <el-col class="line" :span="2"></el-col>
           <el-col :span="11">
-            <div id="netprofit-chart" style="width: 100%; height: 340px; margin-top: 30px"/>
+            <div :id="netprofit_chart" style="width: 100%; height: 340px; margin-top: 30px"/>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="11">
-            <div id="operation-cash-chart" style="width: 100%; height: 340px; margin-top: 30px"/>
+            <div :id="operation_cash_chart" style="width: 100%; height: 340px; margin-top: 30px"/>
           </el-col>
 
           <el-col class="line" :span="2"></el-col>
           <el-col :span="11">
-            <div id="divided-chart" style="width: 100%; height: 340px; margin-top: 30px"/>
+            <div :id="divided_chart" style="width: 100%; height: 340px; margin-top: 30px"/>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="11">
-            <div id="netgrossprofit-chart" style="width: 100%; height: 340px; margin-top: 30px"/>
+            <div :id="netgrossprofit_chart" style="width: 100%; height: 340px; margin-top: 30px"/>
           </el-col>
 
           <el-col class="line" :span="2"></el-col>
@@ -140,20 +140,30 @@ export default {
       renderComponent: false,
       dialogTitle: '',
       fullscreenLoading: false,
+      roe_chart: this.newDate() + 1,
+      netprofit_chart: this.newDate() + 2,
+      operation_cash_chart: this.newDate() + 3,
+      netgrossprofit_chart: this.newDate() + 4,
+      kline_chars_box: this.newDate() + 5,
+      plate_kline_chars_box: this.newDate() + 6,
+      divided_chart: this.newDate() + 7,
     };
   },
   created() {},
   mounted() {
-    this.roeChart = echarts.init(document.getElementById("roe-chart"))
-    this.netProfitChart = echarts.init(document.getElementById("netprofit-chart"))
-    this.operationCashChart = echarts.init(document.getElementById("operation-cash-chart"))
-    this.netGrossProfitChart = echarts.init(document.getElementById("netgrossprofit-chart"))
-    this.klineChart = echarts.init(document.getElementById("kline-chars-box"))
-    this.plateKlineChart = echarts.init(document.getElementById("plate-kline-chars-box"))
-    this.dividedChart = echarts.init(document.getElementById("divided-chart"))
+    this.roeChart = echarts.init(document.getElementById(this.roe_chart))
+    this.netProfitChart = echarts.init(document.getElementById(this.netprofit_chart))
+    this.operationCashChart = echarts.init(document.getElementById(this.operation_cash_chart))
+    this.netGrossProfitChart = echarts.init(document.getElementById(this.netgrossprofit_chart))
+    this.klineChart = echarts.init(document.getElementById(this.kline_chars_box))
+    this.plateKlineChart = echarts.init(document.getElementById(this.plate_kline_chars_box))
+    this.dividedChart = echarts.init(document.getElementById(this.divided_chart))
   },
   unmounted() {},
   methods: {
+    newDate: function() {
+      return dayjs().millisecond;
+    },
     getKeyIndex: async function() {
       this.fullscreenLoading = true;
       const securityCode = `${this.$refs.mkt.selectedLabel}${this.code}`
