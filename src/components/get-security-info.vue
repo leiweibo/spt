@@ -57,31 +57,35 @@
           </el-col>
         </el-row>
         <el-row>
-          <el-col :span="11">
+          <el-col :span="6">
             <div :id="roe_chart" style="width: 100%; height: 340px; margin-top: 30px"/>
           </el-col>
           <el-col class="line" :span="2"></el-col>
-          <el-col :span="11">
+          <el-col :span="6">
             <div :id="netprofit_chart" style="width: 100%; height: 340px; margin-top: 30px"/>
           </el-col>
+          <el-col class="line" :span="2"></el-col>
+          <el-col :span="6">
+            <div :id="total_asset_chart" style="width: 100%; height: 340px; margin-top: 30px"/>
+          </el-col>
         </el-row>
+        
         <el-row>
-          <el-col :span="11">
+          <el-col :span="6">
             <div :id="operation_cash_chart" style="width: 100%; height: 340px; margin-top: 30px"/>
           </el-col>
 
           <el-col class="line" :span="2"></el-col>
-          <el-col :span="11">
+          <el-col :span="6">
             <div :id="divided_chart" style="width: 100%; height: 340px; margin-top: 30px"/>
+          </el-col>
+          <el-col class="line" :span="2"></el-col>
+          <el-col :span="6">
+            <div :id="netgrossprofit_chart" style="width: 100%; height: 340px; margin-top: 30px"/>
           </el-col>
         </el-row>
         <el-row>
-          <el-col :span="11">
-            <div :id="netgrossprofit_chart" style="width: 100%; height: 340px; margin-top: 30px"/>
-          </el-col>
-
           <el-col class="line" :span="2"></el-col>
-          
         </el-row>
       </div>
     </div>
@@ -147,6 +151,7 @@ export default {
       kline_chars_box: this.newDate() + 5,
       plate_kline_chars_box: this.newDate() + 6,
       divided_chart: this.newDate() + 7,
+      total_asset_chart: this.newDate() + 8,
     };
   },
   created() {},
@@ -158,6 +163,7 @@ export default {
     this.klineChart = echarts.init(document.getElementById(this.kline_chars_box))
     this.plateKlineChart = echarts.init(document.getElementById(this.plate_kline_chars_box))
     this.dividedChart = echarts.init(document.getElementById(this.divided_chart))
+    this.totalAssetChart = echarts.init(document.getElementById(this.total_asset_chart))
   },
   unmounted() {},
   methods: {
@@ -309,6 +315,31 @@ export default {
             }).reverse()
           }]
         })
+        this.totalAssetChart.setOption({
+          title: {
+            text: '总资产',
+            left: 'center',
+            align: 'right'
+          },
+          series: [
+          {
+            smooth: true,
+            type: 'bar',
+            barWidth: '20%',
+            data: stkInfoData.finalComposedData.map((d) => d.totalAsset).reverse()
+          }],
+          tooltip: {
+            trigger: "axis"
+          },
+          yAxis: {
+            type: "value"
+          },
+          xAxis: [{
+            data: stkInfoData.finalComposedData.map((data) => {
+              return data.reportDate
+            }).reverse()
+          }]
+        })
         this.operationCashChart.setOption({
           title: {
             text: '经营现金流',
@@ -368,6 +399,7 @@ export default {
           this.operationCashChart?.resize();
           this.stockPriceChart?.resize();
           this.dividedChart?.resize();
+          this.totalAssetChart?.resize();
         };
     },
 
