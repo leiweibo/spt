@@ -27,7 +27,7 @@
           <el-col :span="11">
             <el-descriptions title="核心指标" border>
               <el-descriptions-item label="总市值">{{ totalMktValue }}</el-descriptions-item>
-              <el-descriptions-item label="资产负债率"> {{ debtRatio }}</el-descriptions-item>
+              <el-descriptions-item label="资产负债率"> {{ debtRatio }}  ({{ debtRatioRank||'-'}})</el-descriptions-item>
               <el-descriptions-item label="质押比例">{{ pledgeRatio }}</el-descriptions-item>
               <el-descriptions-item label="商誉/净资产">{{ goodWillRatio }}</el-descriptions-item>
             </el-descriptions>
@@ -46,9 +46,15 @@
           </el-descriptions>
           </el-col>
         </el-row>
+       
         <el-row>
           <el-col>
             <div :id="kline_chars_box" style="width: 100%; height: 540px; margin-top: 30px;" />
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col>
+            <div :id="northholding_charts_box" style="width: 100%; height: 540px; margin-top: 30px;" />
           </el-col>
         </el-row>
         <el-row>
@@ -132,6 +138,7 @@ export default {
       get_message: null,
       totalMktValue: '--',
       debtRatio: '--',
+      debtRatioRank: null,
       pledgeRatio: '--',
       goodWillRatio: '--',
       cash: '--',
@@ -152,6 +159,7 @@ export default {
       plate_kline_chars_box: this.newDate() + 6,
       divided_chart: this.newDate() + 7,
       total_asset_chart: this.newDate() + 8,
+      northholding_charts_box: this.newDate() + 9,
     };
   },
   created() {},
@@ -164,6 +172,7 @@ export default {
     this.plateKlineChart = echarts.init(document.getElementById(this.plate_kline_chars_box))
     this.dividedChart = echarts.init(document.getElementById(this.divided_chart))
     this.totalAssetChart = echarts.init(document.getElementById(this.total_asset_chart))
+    this.northHoldingChart = echarts.init(document.getElementById(this.northholding_charts_box))
   },
   unmounted() {},
   methods: {
@@ -173,6 +182,8 @@ export default {
     getKeyIndex: async function() {
       this.fullscreenLoading = true;
       const securityCode = `${this.$refs.mkt.selectedLabel}${this.code}`
+      const stkIndustryRankRes = await aliyunGet(`/industryrank/${this.code}`)
+      this.debtRatioRank = stkIndustryRankRes.debtRatioRank
       const stkInfoResp = await aliyunGet(`/stockinfo/important`, {
         code: securityCode
       });
@@ -191,6 +202,47 @@ export default {
 
       const currentDate = dayjs();
       const startDateYears = currentDate.subtract(5, "year");
+
+
+      const northholding = await aliyunGet(`/northholding/${this.code}`, {
+        startDate: '2020-12-01',
+        endDate: currentDate.format('YYYY-MM-DD'),
+        type: '0',
+      })
+
+      const holdingMap = new Map();
+      // this.setupKline(securityLineRaw, this.stKLineChart)
+      northholding.data.rows.map((data) => {
+        holdingMap.set(dayjs(data.trade_date).format('YYYYMMDD'), data.holding_amt);
+      })
+
+      const holdingData = Array.from(holdingMap.values());
+
+
+      this.northHoldingChart.setOption({  //动画的配置
+        title: {
+          text: '北上资金持仓历史',
+          left: 'left',
+          align: 'right',
+        },
+        series: [
+        {
+          smooth: true,
+          type: 'line',
+          data: holdingData
+        }],
+        tooltip: {
+          trigger: "axis"
+        },
+        yAxis: {
+          type: "value"
+        },
+        xAxis: [{
+          data: northholding.data.rows.map((data) => {
+            return dayjs(data.trade_date).format('YYYYMMDD')
+          })
+        }]
+      })
       
       const startDate = startDateYears.set('month', 0).set('date', 1).format('YYYY-MM-DD')
       const endDate = currentDate.format('YYYY-MM-DD')
@@ -400,6 +452,7 @@ export default {
           this.stockPriceChart?.resize();
           this.dividedChart?.resize();
           this.totalAssetChart?.resize();
+          this.northHoldingChart?.resize();
         };
     },
 
