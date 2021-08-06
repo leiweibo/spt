@@ -22,8 +22,11 @@
     </div>
     <div id="err">{{ errMsg }}</div>
       <el-row>
-        <el-col :span="11">
+        <el-col :span="16">
           <div id="output">
+            <div style="margin-bottom:20px;">
+              <span>{{showedDatatime}}</span>
+            </div>
             <el-table
               :data="tableData.slice((currentPage - 1)*pageSize, currentPage * pageSize)"
               v-loading.fullscreen.lock="fullscreenLoading"
@@ -35,23 +38,39 @@
               @row-click="onRowClicked">
               <el-table-column
                 prop="securityCCassCode"
-                label="CCASS Code"/>
+                width="80"
+                label="CCASS"/>
               <el-table-column
                 prop="securityCode"
-                label="Security Code">
+                width="80"
+                label="代码">
               </el-table-column>
               <el-table-column
                 prop="securityName"
-                label="Security Name">
+                label="名称">
               </el-table-column>
               <el-table-column
                 prop="securityMkt"
+                width="60"
                 :formatter="securityMktFormatter"
-                label="Market">
+                label="市场">
               </el-table-column>
               <el-table-column
                 prop="holdingAmt"
                 label="最新持仓">
+              </el-table-column>
+
+              <el-table-column
+                prop="closePrice"
+                :cell-style="cellStyle"
+                label="最新股价">
+              </el-table-column>
+
+               <el-table-column
+                prop="priceChangeRatio"
+                :formatter="priceFormatter"
+                :cell-style="cellStyle"
+                label='股价变化'>
               </el-table-column>
 
               <el-table-column
@@ -60,6 +79,10 @@
                 :formatter="dateFormatter">
               </el-table-column>
 
+              <el-table-column
+                prop="preClosePrice"
+                label='N天前股价'>
+              </el-table-column>
               <el-table-column
                 prop="preHoldingAmt"
                 label='N天前持仓'>
@@ -88,9 +111,9 @@
           </div>
         </el-col>
 
-        <el-col class="line" :span="2"></el-col>
+        <el-col class="line" :span="1"></el-col>
 
-        <el-col :span="11">
+        <el-col :span="7">
           <div>
             <NorthHoldingQuota :showInput = "false" :type="1" :passedData="passedData"/>
           </div>
@@ -127,12 +150,13 @@ export default {
       fullscreenLoading: false,
       totalCount: 0,
       passedData: null,
-      pageSize: 40,
+      pageSize: 13,
       currentPage: 1,
       ccode: '',
       emptyText: 'No Data',
       loading: 'Loading',
-      colorProperties: ['changeVal', 'changeRatio']
+      showedDatatime: null,
+      colorProperties: ['changeVal', 'changeRatio', 'priceChangeRatio', 'closePrice']
     };
   },
   methods: {
@@ -153,18 +177,28 @@ export default {
       console.log(sktPerformanceDta);
       // this.totalCount = getDiffDataResult.count;
       const dataResult = sktPerformanceDta.data.finalResult;
+      const klineArray = sktPerformanceDta.data.klines;
+      this.showedDatatime = `最新数据: ${dayjs(dataResult[0].trade_date).format('YYYY-MM-DD')}`
       
       this.tableData = this.tableData.concat(dataResult.map((item) => {
-        return {
+        console.log(`------!!!!-------${dayjs(item.trade_date).format('YYYY-MM-DD')}`)
+        const klines = klineArray.find((k) => k.code === item.security_code)
+        const kline = klines.kline.find((k) => k.time === dayjs(item.trade_date).format('YYYY-MM-DD'))
+        const result = {
           securityCCassCode: item.security_ccass_code,
           securityCode: item.security_code,
           securityName: item.security_name,
           securityMkt: item.security_mkt,
           holdingAmt: item.holding_amt,
+          preTradeDate: item.targetDays.prev_trade_date,
           preHoldingAmt: item.targetDays.prev_holding_amt,
           changeVal: item.targetDays.offsetVal,
           changeRatio: item.targetDays.changeRatio,
+          preClosePrice: klines.kline[0].closePrice,
+          priceChangeRatio: (((kline.closePrice - klines.kline[0].closePrice)/klines.kline[0].closePrice) * 100).toFixed(2),
+          closePrice: `${kline.closePrice}(${kline.changeRate.toFixed(2)}%)`,
         }
+        return result;
       }));
       this.emptyText = this.tableData.length == 0 ? 'No Data.' : 'Loading...';
       
@@ -219,6 +253,9 @@ export default {
     },
     securityMktFormatter(row) {
        return row['securityMkt'] === '22' ? '深市' : '沪市'
+    },
+    priceFormatter(row) {
+      return `${row.priceChangeRatio}%`
     },
     cellStyle({row, column}){
       if (this.colorProperties.includes(column.property )) {
