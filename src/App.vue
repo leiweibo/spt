@@ -25,7 +25,12 @@
         <template #title>股票信息查看</template>
         <el-menu-item index="get-security-info">选股核心指标</el-menu-item>
       </el-submenu>
+      <el-submenu index="3">
+        <template #title>策略实验室</template>
+        <el-menu-item index="northbonds-strategy">北向资金策略</el-menu-item>
+      </el-submenu>
       <el-menu-item index="get-security-snapshot-demo">实验室</el-menu-item>
+
     </el-menu>
     <div id="main">
       <router-view />

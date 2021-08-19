@@ -29,12 +29,12 @@
       <span class="demonstration">{{resultShowValue}}</span>
     </div>
     <div id="output" v-show="showCharts">
-        <div id="content" wrap>
-          <div :id="chart_box_id" style="width: 100%; height: 340px;">
-          </div>
-          <div :id="chart_kline_id" style="width: 100%; height: 340px; margin-top: 30px"/>
+      <div id="content" wrap>
+        <div :id="chart_box_id" style="width: 100%; height: 340px;">
         </div>
+        <div :id="chart_kline_id" style="width: 100%; height: 340px; margin-top: 30px"/>
       </div>
+    </div>
   </div>
 </template>
 

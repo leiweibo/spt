@@ -5,6 +5,7 @@ import northFinance from '../components/north-finance'
 import northNewShareHolding from '../components/north-new-shareholding'
 import getSecurityInfo from '../components/get-security-info'
 import northfinanceExplore from '../components/north-finance-explore'
+import northbondStrategy from '../components/northbonds-strategy'
 
 const routes = [
   {
@@ -41,6 +42,11 @@ const routes = [
     path: '/north-finance-expore',
     name: 'north-finance-expore',
     component: northfinanceExplore,
+  },
+  {
+    path: '/northbonds-strategy',
+    name: 'northbonds-strategy',
+    component: northbondStrategy,
   }
 ]
 

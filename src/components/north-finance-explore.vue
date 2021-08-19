@@ -2,6 +2,13 @@
   <div id="main">
     <div id="input">
       <el-form :inline=true>
+        <el-form-item label="起始日期">
+          <el-date-picker
+            id="startdate"
+            v-model="startdate"
+            type="date">
+          </el-date-picker>
+        </el-form-item>
         <el-form-item label="最近">
           <el-input id="days" v-model="days" placeholder="" />
           <span class="el-form-item__label" style="margin-left:5px;"> 天</span>
@@ -145,6 +152,7 @@ export default {
       errMsg: "",
       tableData: [],
       date: dayjs().subtract(1, 'month').format("YYYY-MM"),
+      startdate: null,
       klineDates: [],
       klineArray: [],
       fullscreenLoading: false,
@@ -163,6 +171,7 @@ export default {
     setupData: async function(ccode, page) {
       this.emptyText = 'Loading...'
       const sktPerformanceDta = await aliyunGet(`/explore/getStkPerformance`, {
+        startdate: dayjs(this.startdate).format('YYYY-MM-DD'),
         duration: this.days,
         inc: (this.increase / 100).toFixed(2),
         dec: (this.decrease / 100).toFixed(2),
@@ -178,7 +187,7 @@ export default {
       // this.totalCount = getDiffDataResult.count;
       const dataResult = sktPerformanceDta.data.finalResult;
       const klineArray = sktPerformanceDta.data.klines;
-      this.showedDatatime = `最新数据: ${dayjs(dataResult[0].trade_date).format('YYYY-MM-DD')}`
+      this.showedDatatime = `最新数据: ${dayjs(dataResult[dataResult.length - 1].trade_date).format('YYYY-MM-DD')}`
       
       this.tableData = this.tableData.concat(dataResult.map((item) => {
         console.log(`------!!!!-------${dayjs(item.trade_date).format('YYYY-MM-DD')}`)
