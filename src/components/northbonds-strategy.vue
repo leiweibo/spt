@@ -15,6 +15,9 @@
           <el-input id="sellRatio" v-model="sellRatio" placeholder="格式为0.01, 表示10%"></el-input>
         </el-form-item>
         <el-form-item>
+          <el-checkbox v-model="syncOperation">同步操作</el-checkbox>
+        </el-form-item>
+        <el-form-item>
           <el-button type="primary" @click="onSubmit"
            v-loading.fullscreen.lock="fullscreenLoading">执行</el-button>
         </el-form-item>
@@ -48,6 +51,7 @@ export default {
       buyRatio: null,
       sellRatio: null,
       fullscreenLoading: false,
+      syncOperation: false,
     }
   },
   methods: {
@@ -57,11 +61,24 @@ export default {
     executeStrategy: async function() {
       const strategyResult = await aliyunGet(`/strategy/1`, { code: this.code, init: this.initBalance, buyRatio: this.buyRatio, sellRatio: this.sellRatio })
       this.fullscreenLoading = false;
-      const profits = strategyResult.data.map((data) => data.profit);
-      const initPrice = strategyResult.data[0].close;
+      let initPrice = strategyResult.data[0].close;
+      let initDate = strategyResult.data[0].date;
+      let initPriceFetched = false;
+      const profits = strategyResult.data.map((data) => {
+        if (this.syncOperation &&  data.holdingAmount > 0 & !initPriceFetched) {
+          initPriceFetched = true;
+          initPrice = data.close
+          initDate = data.date
+        }
+        return data.profit
+      });
       
+      console.log(`the init price: ${initPrice}, the init date is: ${initDate}`)
       const prices = strategyResult.data.map((data) => {
-        return ((data.close - initPrice)/initPrice).toFixed(3);
+        if (dayjs(data.date) >= dayjs(initDate)) {
+          return ((data.close - initPrice)/initPrice).toFixed(3);
+        }
+        return "0.000";
       });
       console.log(profits);
       console.log(prices);

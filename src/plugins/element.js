@@ -22,7 +22,8 @@ import {
   ElRow,
   ElDialog,
   ElForm,
-  ElFormItem
+  ElFormItem,
+  ElCheckbox,
 } from 'element-plus'
 
 export default (app) => {
@@ -50,4 +51,5 @@ export default (app) => {
   app.use(ElDialog)
   app.use(ElFormItem)
   app.use(ElForm)
+  app.use(ElCheckbox)
 }
