@@ -5,6 +5,18 @@
         <el-form-item label="股票代码">
           <el-input id="code" v-model="code" placeholder="SH或者SZ开头"></el-input>
         </el-form-item>
+        <el-form-item label="最近">
+          <el-input id="nDays" v-model="ndays" placeholder="最近N天"></el-input>
+          <span class="el-form-item__label" style="margin-left:5px;"> 天</span>
+        </el-form-item>
+        <el-form-item label="净流入">
+          <el-input id="netBuy" v-model="netBuy" placeholder="净流入"></el-input>
+          <span class="el-form-item__label" style="margin-left:5px;"> 亿</span>
+        </el-form-item>
+        <el-form-item label="净流出">
+          <el-input id="netSell" v-model="netSell" placeholder="净流出"></el-input>
+          <span class="el-form-item__label" style="margin-left:5px;"> 亿</span>
+        </el-form-item>
         <el-form-item label="起始资金">
           <el-input id="initBalance" v-model="initBalance" placeholder="起始资金"></el-input>
         </el-form-item>
@@ -47,6 +59,9 @@ export default {
       chart_box_id: this.newDate(),
       errMsg: '',
       code: null, 
+      netBuy: null,
+      netSell: null,
+      ndays: null,
       initBalance: null,
       buyRatio: null,
       sellRatio: null,
@@ -59,7 +74,7 @@ export default {
       return dayjs().millisecond;
     },
     executeStrategy: async function() {
-      const strategyResult = await aliyunGet(`/strategy/1`, { code: this.code, init: this.initBalance, buyRatio: this.buyRatio, sellRatio: this.sellRatio })
+      const strategyResult = await aliyunGet(`/strategy/1`, { code: this.code, netBuy: this.netBuy, netSell: this.netSell, init: this.initBalance, ndays: this.ndays, buyRatio: this.buyRatio, sellRatio: this.sellRatio })
       this.fullscreenLoading = false;
       let initPrice = strategyResult.data[0].close;
       let initDate = strategyResult.data[0].date;
